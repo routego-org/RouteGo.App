@@ -1,0 +1,181 @@
+@*
+    The portal shell: Bootstrap 5 with the RouteGo theme (design/design-system.md). A white top bar
+    carries the brand and, for a signed-in person, a round profile button whose menu shows who is
+    signed in. Admins and operators also get a side menu with their work pages (a slide-in panel
+    on phones). The role menu (home-and-navigation: exactly the pages the person may open, in the
+    spec's order) is whatever carries data-role-menu: the top bar for visitors and customers, the
+    side menu for operators and admins. Then the flash message once, then the page. Assets go
+    through cdn-href / cdn-src.
+*@
+@{
+    PortalShell shell = PortalShell.From(Context);
+    bool isFullWidth = ViewData["FullWidth"] is true;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#1E3A8A" />
+    <title>@ViewData["Title"] · RouteGo</title>
+    <link rel="stylesheet" cdn-href="~/lib/bootstrap/css/bootstrap.min.css" />
+    <link rel="stylesheet" cdn-href="~/css/site.css" />
+    @await RenderSectionAsync("Head", required: false)
+</head>
+<body class="@(shell.HasSideMenu ? "has-sidebar" : "")">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="app-header sticky-top">
+        <nav class="navbar navbar-expand-md" aria-label="Main">
+            <div class="@(shell.HasSideMenu ? "container-fluid" : "container")">
+                @if (shell.HasSideMenu)
+                {
+                    <button class="icon-button d-lg-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#side-menu"
+                            aria-controls="side-menu" aria-label="Open menu">
+                        <partial name="_Icon" model="@("menu")" />
+                    </button>
+                }
+                <a class="brand" href="/">
+                    <span class="brand-mark"><partial name="_Icon" model="@("bus")" /></span>
+                    <span class="brand-name">Route<span>Go</span></span>
+                </a>
+
+                @if (!shell.IsSignedIn)
+                {
+                    <button class="icon-button d-md-none ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#visitor-menu"
+                            aria-controls="visitor-menu" aria-expanded="false" aria-label="Menu">
+                        <partial name="_Icon" model="@("menu")" />
+                    </button>
+                    <div class="collapse navbar-collapse" id="visitor-menu">
+                        <ul class="navbar-nav ms-auto align-items-md-center gap-md-2" data-role-menu>
+                            <li class="nav-item"><a class="nav-link header-link" href="/auth/login"><partial name="_Icon" model="@("log-in")" /> Sign in</a></li>
+                            <li class="nav-item"><a class="btn btn-accent rounded-pill px-4 my-2 my-md-0" href="/auth/register">Register</a></li>
+                            <li class="nav-item"><a class="nav-link header-link" href="/operator/apply"><partial name="_Icon" model="@("bus")" /> Apply as operator</a></li>
+                        </ul>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex align-items-center gap-2 ms-auto">
+                        @if (!shell.HasSideMenu)
+                        {
+                            <ul class="navbar-nav flex-row" data-role-menu>
+                                <li class="nav-item">
+                                    <a class="nav-link header-link @(shell.IsCurrent("/") ? "active" : "")" href="/"><partial name="_Icon" model="@("home")" /> <span class="nav-label">Home</span></a>
+                                </li>
+                                @if (shell.IsCustomer)
+                                {
+                                    <li class="nav-item">
+                                        <a class="nav-link header-link @(shell.IsCurrent("/my-bookings") ? "active" : "")" href="/my-bookings"><partial name="_Icon" model="@("ticket")" /> <span class="nav-label">My bookings</span></a>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                        <div class="dropdown">
+                            <button class="profile-button" type="button" data-bs-toggle="dropdown" aria-expanded="false"
+                                    aria-label="Account menu for @shell.Email">
+                                <span class="avatar">@shell.AvatarLetter</span>
+                                <span class="profile-role d-none d-md-inline">@shell.RoleLabel</span>
+                                <partial name="_Icon" model="@("chevron-down")" />
+                            </button>
+                            @* Razor always writes data-* attributes, so the role-menu mark is chosen by branch. *@
+                            @if (shell.HasSideMenu)
+                            {
+                                <ul class="dropdown-menu dropdown-menu-end profile-menu">
+                                    <partial name="_ProfileMenuItems" model="shell" />
+                                </ul>
+                            }
+                            else
+                            {
+                                <ul class="dropdown-menu dropdown-menu-end profile-menu" data-role-menu>
+                                    <partial name="_ProfileMenuItems" model="shell" />
+                                </ul>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </nav>
+    </header>
+
+    @if (shell.HasSideMenu)
+    {
+        <div class="app-body">
+            <aside class="offcanvas-lg offcanvas-start app-sidebar" id="side-menu" tabindex="-1" aria-labelledby="side-menu-title">
+                <div class="offcanvas-header">
+                    <span class="fw-semibold" id="side-menu-title">Menu</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#side-menu" aria-label="Close menu"></button>
+                </div>
+                <div class="offcanvas-body">
+                    <nav class="sidebar-nav" aria-label="Role menu" data-role-menu>
+                        <a class="sidebar-link @(shell.IsCurrent("/") ? "active" : "")" href="/"><partial name="_Icon" model="@("home")" /> Home</a>
+                        <a class="sidebar-link @(shell.IsCurrent("/profile") ? "active" : "")" href="/profile"><partial name="_Icon" model="@("user")" /> My profile</a>
+                        <span class="sidebar-section">@shell.RoleLabel</span>
+                        @if (shell.IsOperator)
+                        {
+                            <a class="sidebar-link @(shell.IsCurrent("/operator/dashboard") ? "active" : "")" href="/operator/dashboard"><partial name="_Icon" model="@("chart")" /> Dashboard</a>
+                            <a class="sidebar-link @(shell.IsCurrent("/operator/buses") ? "active" : "")" href="/operator/buses"><partial name="_Icon" model="@("bus")" /> Buses</a>
+                            <a class="sidebar-link @(shell.IsCurrent("/operator/routes") ? "active" : "")" href="/operator/routes"><partial name="_Icon" model="@("map-pin")" /> Routes</a>
+                            <a class="sidebar-link @(shell.IsCurrent("/operator/schedules") ? "active" : "")" href="/operator/schedules"><partial name="_Icon" model="@("calendar")" /> Schedules</a>
+                            <a class="sidebar-link @(shell.IsCurrent("/operator/trips") ? "active" : "")" href="/operator/trips"><partial name="_Icon" model="@("ticket")" /> Trips</a>
+                        }
+                        else
+                        {
+                            <a class="sidebar-link @(shell.IsCurrent("/admin/users") ? "active" : "")" href="/admin/users"><partial name="_Icon" model="@("users")" /> Users</a>
+                            <a class="sidebar-link @(shell.IsCurrent("/admin/users/new") ? "active" : "")" href="/admin/users/new"><partial name="_Icon" model="@("user-plus")" /> Create admin</a>
+                            <a class="sidebar-link @(shell.IsCurrent("/admin/operators") ? "active" : "")" href="/admin/operators"><partial name="_Icon" model="@("clipboard")" /> Operator applications</a>
+                            <a class="sidebar-link @(shell.IsCurrent("/admin/operator-profiles") ? "active" : "")" href="/admin/operator-profiles"><partial name="_Icon" model="@("briefcase")" /> Operators</a>
+                            <a class="sidebar-link @(shell.IsCurrent("/admin/trips") ? "active" : "")" href="/admin/trips"><partial name="_Icon" model="@("ticket")" /> Trips</a>
+                            <a class="sidebar-link @(shell.IsCurrent("/admin/bookings") ? "active" : "")" href="/admin/bookings"><partial name="_Icon" model="@("clipboard")" /> Bookings</a>
+                            <a class="sidebar-link @(shell.IsCurrent("/admin/summary") ? "active" : "")" href="/admin/summary"><partial name="_Icon" model="@("chart")" /> Summary</a>
+                            <a class="sidebar-link @(shell.IsCurrent("/admin/settlements") ? "active" : "")" href="/admin/settlements"><partial name="_Icon" model="@("briefcase")" /> Settlements</a>
+                            <a class="sidebar-link @(shell.IsCurrent("/admin/audit-log") ? "active" : "")" href="/admin/audit-log"><partial name="_Icon" model="@("clipboard")" /> Audit log</a>
+                            <a class="sidebar-link @(shell.IsCurrent("/admin/email-log") ? "active" : "")" href="/admin/email-log"><partial name="_Icon" model="@("mail")" /> Email log</a>
+                            <a class="sidebar-link @(shell.IsCurrent("/admin/signing-keys") ? "active" : "")" href="/admin/signing-keys"><partial name="_Icon" model="@("key")" /> Signing keys</a>
+                        }
+                        <form method="post" asp-page="/Auth/Logout/Logout" class="sidebar-foot">
+                            <button type="submit" class="sidebar-link sidebar-sign-out"><partial name="_Icon" model="@("log-out")" /> Sign out</button>
+                        </form>
+                    </nav>
+                </div>
+            </aside>
+            <main id="main" class="app-main">
+                <div class="container-fluid content-pad">
+                    <partial name="_Flash" />
+                    @RenderBody()
+                </div>
+            </main>
+        </div>
+    }
+    else if (isFullWidth)
+    {
+        <main id="main">
+            <div class="container flash-slot">
+                <partial name="_Flash" />
+            </div>
+            @RenderBody()
+        </main>
+    }
+    else
+    {
+        <main id="main" class="app-main">
+            <div class="container content-pad">
+                <partial name="_Flash" />
+                @RenderBody()
+            </div>
+        </main>
+    }
+
+    @if (!shell.HasSideMenu)
+    {
+        <footer class="app-footer">
+            <div class="container d-flex flex-column flex-sm-row justify-content-between gap-2">
+                <span class="brand-name small">Route<span>Go</span></span>
+                <span class="small">Intercity bus tickets, booked in minutes.</span>
+            </div>
+        </footer>
+    }
+    <script cdn-src="~/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script cdn-src="~/js/site.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,69 @@
+@page
+@model RouteGo.App.Features.Admin.Settlements.SettlementsModel
+@using RouteGo.App.Features.Admin.Settlements
+@*
+    One day's settlements for every bus company. "Download report" is a plain link: the page asks
+    Reporting for a fresh link on every click and the browser is sent straight to it, so the report's
+    address is never written to a page.
+*@
+@{
+    ViewData["Title"] = "Settlements";
+    SettlementsView view = Model.View;
+}
+
+<h1 class="page-title mb-3">Settlements</h1>
+
+<form method="get" action="/admin/settlements" class="row g-2 align-items-end mb-3 filter-bar" novalidate data-settlements-form>
+    <div class="col-sm-4">
+        <label for="settlements-day" class="form-label">Day</label>
+        <input id="settlements-day" name="day" type="date" class="form-control" value="@Model.DayText" />
+        @if (view.DayError != null)
+        {
+            <span class="invalid-feedback d-block" data-day-error>@view.DayError</span>
+        }
+    </div>
+    <div class="col-sm-3">
+        <button type="submit" class="btn btn-primary w-100" data-show-settlements>Show settlements</button>
+    </div>
+</form>
+
+<partial name="_PageAlert" model="view.Alert" />
+
+@if (view.Items != null && view.Day != null)
+{
+    @if (view.Items.Count == 0)
+    {
+        <p data-no-settlements>@SettlementsHandler.NoneText(view.Day.Value)</p>
+    }
+    else
+    {
+        <p class="lead" data-settlements-count>@SettlementsHandler.CountText(view.Items.Count, view.Day.Value)</p>
+        <div class="table-responsive">
+            <table class="table align-middle" data-settlements>
+                <thead>
+                    <tr>
+                        <th scope="col">Operator ID</th>
+                        <th scope="col">Gross sales</th>
+                        <th scope="col">Refunds</th>
+                        <th scope="col">Net</th>
+                        <th scope="col">Generated at</th>
+                        <th scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (Settlement settlement in view.Items)
+                    {
+                        <tr data-settlement="@settlement.OperatorId">
+                            <td>@settlement.OperatorId</td>
+                            <td data-gross>@ReportDisplay.Rupees(settlement.Gross)</td>
+                            <td data-refunds>@ReportDisplay.Rupees(settlement.Refunds)</td>
+                            <td data-net>@ReportDisplay.Rupees(settlement.Net)</td>
+                            <td>@IndiaTime.Format(settlement.GeneratedAt)</td>
+                            <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="@Model.DownloadAddress(settlement)" data-download>Download report</a></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}

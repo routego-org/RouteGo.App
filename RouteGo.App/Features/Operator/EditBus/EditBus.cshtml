@@ -1,0 +1,24 @@
+@page "/operator/buses/{busId:guid}/edit"
+@model RouteGo.App.Features.Operator.EditBus.EditBusModel
+@*
+    The address is fixed by the product (/operator/buses/{busId}/edit, linked from the bus page), so
+    the page declares it instead of /operator/edit-bus.
+*@
+@{
+    string? title = Model.Title();
+    ViewData["Title"] = title ?? "Bus";
+}
+
+<div class="form-card">
+    @if (title != null)
+    {
+        <h1 class="mb-3" data-title>@title</h1>
+    }
+
+    <partial name="_PageAlert" model="Model.Alert" />
+
+    @if (Model.ShowsForm)
+    {
+        <partial name="_BusForm" model="Model.View()" />
+    }
+</div>

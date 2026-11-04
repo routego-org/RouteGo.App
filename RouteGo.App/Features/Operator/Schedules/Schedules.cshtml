@@ -1,0 +1,120 @@
+@page
+@model RouteGo.App.Features.Operator.Schedules.SchedulesModel
+@using RouteGo.App.Features.Operator.Schedules
+@{ ViewData["Title"] = "My schedules"; }
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="page-title mb-0">My schedules</h1>
+    @if (!Model.IsContentHidden)
+    {
+        <a class="btn btn-primary" href="@SchedulesModel.NewScheduleAddress" data-add-schedule>Add a schedule</a>
+    }
+</div>
+
+@if (!Model.IsContentHidden)
+{
+    <form method="get" action="/operator/schedules" class="row g-2 align-items-end mb-4 filter-bar" novalidate data-schedules-filters>
+        <div class="col-sm-3">
+            <label for="filter-status" class="form-label">Status</label>
+            <select id="filter-status" name="status" class="form-select">
+                @foreach (string status in SchedulesModel.Statuses)
+                {
+                    <option value="@status" selected="@((Model.Query.Status ?? "") == status)">@SchedulesModel.StatusChoice(status)</option>
+                }
+            </select>
+        </div>
+        @if (Model.Data?.Routes != null)
+        {
+            <div class="col-sm-4">
+                <label for="filter-route" class="form-label">Route</label>
+                <select id="filter-route" name="routeId" class="form-select">
+                    <option value="" selected="@(Model.Query.RouteId is null)">All</option>
+                    @foreach (RouteSummary route in Model.Data.Routes)
+                    {
+                        <option value="@route.RouteId" selected="@(Model.Query.RouteId == route.RouteId)">@route.Name()</option>
+                    }
+                </select>
+            </div>
+        }
+        @if (Model.Data?.Buses != null)
+        {
+            <div class="col-sm-3">
+                <label for="filter-bus" class="form-label">Bus</label>
+                <select id="filter-bus" name="busId" class="form-select">
+                    <option value="" selected="@(Model.Query.BusId is null)">All</option>
+                    @foreach (BusSummary bus in Model.Data.Buses)
+                    {
+                        <option value="@bus.BusId" selected="@(Model.Query.BusId == bus.BusId)">@bus.Name</option>
+                    }
+                </select>
+            </div>
+        }
+        <div class="col-sm-2">
+            <button type="submit" class="btn btn-primary w-100">Show</button>
+        </div>
+    </form>
+}
+
+<partial name="_PageAlert" model="Model.Alert" />
+
+@if (Model.Data != null)
+{
+    SchedulesPage schedules = Model.Data.Schedules;
+    if (schedules.Items.Count == 0)
+    {
+        @if (Model.Query.IsUnfiltered())
+        {
+            <p data-schedules-empty>You have no schedules yet. Add a schedule to put a bus on a route and start selling trips.</p>
+        }
+        else
+        {
+            <p data-schedules-empty>@Messages.EmptyFiltered("schedules")</p>
+        }
+    }
+    else
+    {
+        <p class="small text-muted" data-schedules-showing>@FleetDisplay.ShowingText(schedules.Page, schedules.Items.Count, schedules.TotalCount, "schedules")</p>
+        <div class="table-responsive">
+            <table class="table align-middle" data-schedules>
+                <thead>
+                    <tr>
+                        <th scope="col">Route</th>
+                        <th scope="col">Bus</th>
+                        <th scope="col">Departure time</th>
+                        <th scope="col">Days</th>
+                        <th scope="col">Fares</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Trips on sale until</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (ScheduleSummary schedule in schedules.Items)
+                    {
+                        <tr data-schedule>
+                            <td><a href="@SchedulesModel.ScheduleAddress(schedule.ScheduleId)">@Model.RouteName(schedule.RouteId)</a></td>
+                            <td>@Model.BusName(schedule.BusId)</td>
+                            <td>@TripDisplay.DepartureTime(schedule.DepartureTime)</td>
+                            <td>@TripDisplay.DaysText(schedule.DaysOfWeek)</td>
+                            <td>@TripDisplay.FaresText(schedule.ClassFares, null)</td>
+                            <td>@FleetDisplay.StatusLabel(schedule.Status)</td>
+                            <td>@IndiaTime.FormatDay(schedule.TripsGeneratedThrough)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (FleetDisplay.PageCount(schedules.TotalCount) > 1)
+        {
+            <nav data-schedules-pages>
+                <ul class="pagination">
+                    @for (int pageNumber = 1; pageNumber <= FleetDisplay.PageCount(schedules.TotalCount); pageNumber++)
+                    {
+                        <li class="page-item @(pageNumber == schedules.Page ? "active" : "")">
+                            <a class="page-link" href="@Model.ListAddress(pageNumber)">@pageNumber</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    }
+}

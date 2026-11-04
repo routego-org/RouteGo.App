@@ -1,0 +1,90 @@
+@page
+@model RouteGo.App.Features.Operator.Routes.RoutesModel
+@using RouteGo.App.Features.Operator.Routes
+@{ ViewData["Title"] = "My routes"; }
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="page-title mb-0">My routes</h1>
+    @if (!Model.IsContentHidden)
+    {
+        <a class="btn btn-primary" href="@RoutesModel.NewRouteAddress" data-add-route>Add a route</a>
+    }
+</div>
+
+@if (!Model.IsContentHidden)
+{
+    <form method="get" action="/operator/routes" class="row g-2 align-items-end mb-4 filter-bar" novalidate data-routes-filters>
+        <div class="col-sm-5">
+            <label for="filter-status" class="form-label">Status</label>
+            <select id="filter-status" name="status" class="form-select">
+                @foreach (string status in RoutesModel.Statuses)
+                {
+                    <option value="@status" selected="@((Model.Query.Status ?? "") == status)">@RoutesModel.StatusChoice(status)</option>
+                }
+            </select>
+        </div>
+        <div class="col-sm-2">
+            <button type="submit" class="btn btn-primary w-100">Show</button>
+        </div>
+    </form>
+}
+
+<partial name="_PageAlert" model="Model.Alert" />
+
+@if (Model.Routes != null)
+{
+    RoutesPage routes = Model.Routes;
+    if (routes.Items.Count == 0)
+    {
+        @if (Model.IsUnfiltered())
+        {
+            <p data-routes-empty>You have no routes yet. Add a route to say where your buses go.</p>
+        }
+        else
+        {
+            <p data-routes-empty>@Messages.EmptyFiltered("routes")</p>
+        }
+    }
+    else
+    {
+        <p class="small text-muted" data-routes-showing>@FleetDisplay.ShowingText(routes.Page, routes.Items.Count, routes.TotalCount, "routes")</p>
+        <div class="table-responsive">
+            <table class="table align-middle" data-routes>
+                <thead>
+                    <tr>
+                        <th scope="col">Route</th>
+                        <th scope="col">Stops</th>
+                        <th scope="col">Distance (km)</th>
+                        <th scope="col">Journey time</th>
+                        <th scope="col">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (RouteSummary route in routes.Items)
+                    {
+                        <tr data-route>
+                            <td><a href="@RoutesModel.RouteAddress(route.RouteId)">@route.Name()</a></td>
+                            <td>@route.Stops.Count</td>
+                            <td>@route.DistanceKm</td>
+                            <td>@FleetDisplay.Duration(route.JourneyMinutes)</td>
+                            <td>@FleetDisplay.StatusLabel(route.Status)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (FleetDisplay.PageCount(routes.TotalCount) > 1)
+        {
+            <nav data-routes-pages>
+                <ul class="pagination">
+                    @for (int pageNumber = 1; pageNumber <= FleetDisplay.PageCount(routes.TotalCount); pageNumber++)
+                    {
+                        <li class="page-item @(pageNumber == routes.Page ? "active" : "")">
+                            <a class="page-link" href="@Model.ListAddress(pageNumber)">@pageNumber</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    }
+}

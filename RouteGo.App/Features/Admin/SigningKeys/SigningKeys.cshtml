@@ -1,0 +1,44 @@
+@page
+@model RouteGo.App.Features.Admin.SigningKeys.SigningKeysModel
+@using RouteGo.App.Features.Admin.SigningKeys
+@{ ViewData["Title"] = "Signing keys"; }
+
+<h1 class="page-title">Signing keys</h1>
+
+<p data-keys-intro>These are the public keys other RouteGo services use to check that a sign-in pass really comes from RouteGo Identity. They contain no secrets. Keys are changed by the platform engineer, not on this page.</p>
+
+<partial name="_PageAlert" model="Model.Alert" />
+
+@if (Model.Keys != null)
+{
+    if (Model.Keys.Count == 0)
+    {
+        <p data-keys-empty>Identity is not publishing any keys right now. Sign-in will not work until it does. Tell the platform engineer.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle" data-keys-table>
+                <thead>
+                    <tr>
+                        <th scope="col">Key ID</th>
+                        <th scope="col">Key type</th>
+                        <th scope="col">Algorithm</th>
+                        <th scope="col">Use</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (SigningKey key in Model.Keys)
+                    {
+                        <tr data-key-row="@key.Kid">
+                            <td>@key.Kid</td>
+                            <td>@key.Kty</td>
+                            <td>@key.Alg</td>
+                            <td>@key.Use</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}

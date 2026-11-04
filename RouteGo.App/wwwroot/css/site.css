@@ -1,0 +1,1224 @@
+/* RouteGo theme on top of Bootstrap 5.3 (design/design-system.md): navy #1E3A8A is the primary
+   colour, #172E6E its hover/active shade. A warm rose accent (#E11D48, 4.7:1 on white) marks the
+   one call to action that should catch the eye, and a soft blue-grey page background lets the
+   white cards stand out. Bootstrap's own defaults cover everything else. */
+:root {
+    --rg-navy: #1E3A8A;
+    --rg-navy-dark: #172E6E;
+    --rg-navy-deep: #0F1F4D;
+    --rg-accent: #E11D48;
+    --rg-accent-dark: #BE123C;
+    --rg-page: #F3F5FA;
+    --rg-card: #FFFFFF;
+    --rg-line: #E4E8F1;
+    --rg-soft: #EEF2FF;
+    --rg-radius: 0.875rem;
+    --rg-shadow: 0 1px 2px rgba(15, 31, 77, 0.06), 0 4px 16px rgba(15, 31, 77, 0.06);
+    --rg-shadow-lg: 0 10px 30px rgba(15, 31, 77, 0.12);
+    --rg-header-height: 64px;
+    --rg-sidebar-width: 260px;
+
+    --bs-primary: #1E3A8A;
+    --bs-primary-rgb: 30, 58, 138;
+    --bs-link-color: #1E3A8A;
+    --bs-link-color-rgb: 30, 58, 138;
+    --bs-link-hover-color: #172E6E;
+    --bs-link-hover-color-rgb: 23, 46, 110;
+    --bs-focus-ring-color: rgba(30, 58, 138, 0.25);
+    --bs-body-bg: var(--rg-page);
+    --bs-border-color: var(--rg-line);
+}
+
+body {
+    background-color: var(--rg-page);
+    color: #1F2937;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: clip;
+}
+
+h1, .h1 {
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────── */
+
+.btn {
+    font-weight: 600;
+    border-radius: 0.625rem;
+}
+
+.btn-primary {
+    --bs-btn-bg: #1E3A8A;
+    --bs-btn-border-color: #1E3A8A;
+    --bs-btn-hover-bg: #172E6E;
+    --bs-btn-hover-border-color: #172E6E;
+    --bs-btn-active-bg: #172E6E;
+    --bs-btn-active-border-color: #172E6E;
+    --bs-btn-disabled-bg: #1E3A8A;
+    --bs-btn-disabled-border-color: #1E3A8A;
+    --bs-btn-focus-shadow-rgb: 30, 58, 138;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+}
+
+.btn-accent {
+    --bs-btn-color: #FFFFFF;
+    --bs-btn-bg: var(--rg-accent);
+    --bs-btn-border-color: var(--rg-accent);
+    --bs-btn-hover-color: #FFFFFF;
+    --bs-btn-hover-bg: var(--rg-accent-dark);
+    --bs-btn-hover-border-color: var(--rg-accent-dark);
+    --bs-btn-active-color: #FFFFFF;
+    --bs-btn-active-bg: var(--rg-accent-dark);
+    --bs-btn-active-border-color: var(--rg-accent-dark);
+    --bs-btn-focus-shadow-rgb: 225, 29, 72;
+    box-shadow: 0 6px 16px rgba(225, 29, 72, 0.28);
+}
+
+.btn-light {
+    --bs-btn-color: var(--rg-navy);
+}
+
+.icon {
+    flex-shrink: 0;
+    vertical-align: -0.2em;
+}
+
+.icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 0.625rem;
+    background: transparent;
+    color: var(--rg-navy);
+}
+
+.icon-button:hover {
+    background: var(--rg-soft);
+}
+
+.skip-link {
+    position: absolute;
+    left: 1rem;
+    top: -3rem;
+    z-index: 2000;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    background: var(--rg-navy);
+    color: #FFFFFF;
+}
+
+.skip-link:focus {
+    top: 0.5rem;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────── */
+
+.app-header {
+    background: #FFFFFF;
+    border-bottom: 1px solid var(--rg-line);
+    box-shadow: 0 2px 12px rgba(15, 31, 77, 0.05);
+}
+
+.app-header .navbar {
+    min-height: var(--rg-header-height);
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+.brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    margin-right: 1rem;
+}
+
+.brand-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 0.75rem;
+    background: linear-gradient(135deg, var(--rg-accent), #F43F5E);
+    color: #FFFFFF;
+    box-shadow: 0 4px 12px rgba(225, 29, 72, 0.3);
+}
+
+.brand-name {
+    font-size: 1.375rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--rg-navy);
+}
+
+.brand-name span {
+    color: var(--rg-accent);
+}
+
+.header-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 600;
+    color: #374151;
+    border-radius: 0.625rem;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+}
+
+.header-link:hover,
+.header-link.active {
+    color: var(--rg-navy);
+    background: var(--rg-soft);
+}
+
+/* On the smallest phones the Home link keeps only its icon; the word stays for screen readers. */
+@media (max-width: 575.98px) {
+    .nav-label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+    }
+}
+
+.profile-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0.25rem 0.625rem 0.25rem 0.25rem;
+    border: 1px solid var(--rg-line);
+    border-radius: 50rem;
+    background: #FFFFFF;
+    color: #374151;
+    font-weight: 600;
+}
+
+.profile-button:hover,
+.profile-button[aria-expanded="true"] {
+    border-color: #C7D0E6;
+    background: var(--rg-soft);
+}
+
+.avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--rg-navy), #4F46E5);
+    color: #FFFFFF;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.avatar-lg {
+    width: 44px;
+    height: 44px;
+    font-size: 1.125rem;
+}
+
+.profile-menu {
+    min-width: 280px;
+    max-width: calc(100vw - 2rem);
+    padding: 0.5rem;
+    border: 1px solid var(--rg-line);
+    border-radius: var(--rg-radius);
+    box-shadow: var(--rg-shadow-lg);
+}
+
+.profile-menu-head {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    margin-bottom: 0.25rem;
+    border-radius: 0.625rem;
+    background: var(--rg-soft);
+    min-width: 0;
+}
+
+.profile-menu .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+}
+
+.profile-menu .dropdown-item:active {
+    background: var(--rg-soft);
+    color: var(--rg-navy);
+}
+
+/* ── Admin side menu ─────────────────────────────────────────────────── */
+
+.app-body {
+    display: flex;
+    flex: 1 0 auto;
+}
+
+.app-sidebar {
+    --bs-offcanvas-width: var(--rg-sidebar-width);
+    background: var(--rg-navy-deep);
+    color: #C7D2FE;
+}
+
+.app-sidebar .offcanvas-header {
+    color: #FFFFFF;
+}
+
+.app-sidebar .btn-close {
+    filter: invert(1) grayscale(1) brightness(2);
+}
+
+@media (min-width: 992px) {
+    .app-sidebar {
+        position: sticky;
+        top: var(--rg-header-height);
+        width: var(--rg-sidebar-width);
+        height: calc(100vh - var(--rg-header-height));
+        flex-shrink: 0;
+        overflow-y: auto;
+        background: var(--rg-navy-deep) !important;
+    }
+
+    .app-sidebar .offcanvas-body {
+        height: 100%;
+    }
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    width: 100%;
+    padding: 1rem 0.75rem;
+    min-height: 100%;
+}
+
+.sidebar-section {
+    margin: 1rem 0.75rem 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #8090C0;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    min-height: 44px;
+    padding: 0.6rem 0.75rem;
+    border: 0;
+    border-radius: 0.625rem;
+    background: transparent;
+    color: #C7D2FE;
+    font-weight: 500;
+    text-align: left;
+    text-decoration: none;
+}
+
+.sidebar-link:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #FFFFFF;
+}
+
+.sidebar-link.active {
+    background: #FFFFFF;
+    color: var(--rg-navy);
+    font-weight: 700;
+}
+
+.sidebar-foot {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-sign-out:hover {
+    background: rgba(225, 29, 72, 0.18);
+    color: #FFE4E6;
+}
+
+/* ── Page content ────────────────────────────────────────────────────── */
+
+.app-main {
+    flex: 1 0 auto;
+    min-width: 0;
+}
+
+/* Beside the side menu the content takes the space that is left, never its widest line. */
+.app-body > .app-main {
+    flex: 1 1 0%;
+}
+
+.content-pad {
+    padding-top: 1rem;
+    padding-bottom: 2rem;
+}
+
+@media (min-width: 768px) {
+    .content-pad {
+        padding-top: 2rem;
+        padding-bottom: 3rem;
+    }
+}
+
+.has-sidebar .content-pad {
+    max-width: 1280px;
+}
+
+@media (min-width: 992px) {
+    .has-sidebar .content-pad {
+        padding-left: 2rem;
+        padding-right: 2rem;
+    }
+}
+
+.flash-slot .alert {
+    margin-top: 1rem;
+}
+
+.page-title {
+    font-size: 1.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.section-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    margin: 2rem 0 1rem;
+}
+
+/* A form page's column becomes a raised white card in the middle of the page. */
+.form-card {
+    background: var(--rg-card);
+    border: 1px solid var(--rg-line);
+    border-radius: 1.25rem;
+    box-shadow: var(--rg-shadow);
+    padding: 1.5rem 1.25rem;
+}
+
+@media (min-width: 768px) {
+    .form-card {
+        padding: 2.5rem;
+        margin-top: 1rem;
+    }
+}
+
+.form-card h1 {
+    font-size: 1.625rem;
+}
+
+.form-label {
+    font-weight: 600;
+    font-size: 0.925rem;
+    color: #374151;
+}
+
+.form-control,
+.form-select {
+    min-height: 46px;
+    border-radius: 0.625rem;
+    border-color: #D5DBE8;
+    background-color: #FFFFFF;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #8F9DC5;
+    box-shadow: 0 0 0 0.25rem rgba(30, 58, 138, 0.15);
+}
+
+.alert {
+    border: 0;
+    border-radius: var(--rg-radius);
+}
+
+.card {
+    border-color: var(--rg-line);
+    border-radius: var(--rg-radius);
+    box-shadow: var(--rg-shadow);
+}
+
+/* Search and filter forms on the admin pages sit on one white strip. */
+.filter-bar {
+    background: var(--rg-card);
+    border: 1px solid var(--rg-line);
+    border-radius: var(--rg-radius);
+    box-shadow: var(--rg-shadow);
+    padding: 1rem 0.75rem;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.table-responsive {
+    background: var(--rg-card);
+    border: 1px solid var(--rg-line);
+    border-radius: var(--rg-radius);
+    box-shadow: var(--rg-shadow);
+    margin-bottom: 1rem;
+}
+
+.table {
+    --bs-table-bg: transparent;
+    margin-bottom: 0;
+}
+
+.table > thead th {
+    background: #F8FAFD;
+    color: #6B7280;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    border-bottom-width: 1px;
+}
+
+.table > :not(caption) > * > * {
+    padding: 0.85rem 1rem;
+}
+
+.table > tbody > tr:last-child > * {
+    border-bottom: 0;
+}
+
+.table > tbody > tr:hover > * {
+    background: #FAFBFE;
+}
+
+.pagination {
+    --bs-pagination-border-radius: 0.625rem;
+    --bs-pagination-active-bg: var(--rg-navy);
+    --bs-pagination-active-border-color: var(--rg-navy);
+    gap: 0.25rem;
+}
+
+.pagination .page-link {
+    border-radius: 0.5rem;
+}
+
+/* ── Visitor home ────────────────────────────────────────────────────── */
+
+.hero {
+    position: relative;
+    color: #FFFFFF;
+    padding: 3.5rem 0 5.5rem;
+    background:
+        radial-gradient(circle at 85% 20%, rgba(244, 63, 94, 0.45), transparent 45%),
+        radial-gradient(circle at 10% 90%, rgba(99, 102, 241, 0.45), transparent 50%),
+        linear-gradient(135deg, var(--rg-navy-deep) 0%, var(--rg-navy) 55%, #3730A3 100%);
+}
+
+@media (min-width: 992px) {
+    .hero {
+        padding: 5rem 0 7rem;
+    }
+}
+
+.hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.85rem;
+    margin-bottom: 1.25rem;
+    border-radius: 50rem;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.hero-title {
+    font-size: clamp(2.25rem, 6vw, 3.75rem);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    margin-bottom: 1rem;
+}
+
+.hero-lead {
+    font-size: clamp(1.125rem, 2.5vw, 1.375rem);
+    color: #DCE3FF;
+    margin-bottom: 2rem;
+}
+
+.hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1rem;
+}
+
+.hero-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 44px;
+    color: #FFFFFF;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.hero-link:hover {
+    color: #FFFFFF;
+    text-decoration: underline;
+}
+
+.hero-art {
+    position: relative;
+    height: 320px;
+}
+
+.hero-art-ring {
+    position: absolute;
+    inset: 10px 40px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.02) 70%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.hero-art-bus {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -60%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 150px;
+    height: 150px;
+    border-radius: 2.5rem;
+    background: linear-gradient(135deg, var(--rg-accent), #FB7185);
+    box-shadow: 0 20px 40px rgba(225, 29, 72, 0.4);
+    color: #FFFFFF;
+}
+
+.hero-art-bus .icon {
+    width: 84px;
+    height: 84px;
+    stroke-width: 1.6;
+}
+
+.hero-art-route {
+    position: absolute;
+    left: 15%;
+    right: 15%;
+    bottom: 40px;
+    display: flex;
+    align-items: center;
+}
+
+.hero-art-stop {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #FFFFFF;
+    box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.2);
+}
+
+.hero-art-stop-end {
+    background: #FB7185;
+    box-shadow: 0 0 0 6px rgba(251, 113, 133, 0.3);
+}
+
+.hero-art-line {
+    flex: 1;
+    height: 0;
+    margin: 0 0.5rem;
+    border-top: 3px dashed rgba(255, 255, 255, 0.5);
+}
+
+.hero-wave {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    width: 100%;
+    height: 60px;
+    color: var(--rg-page);
+}
+
+.feature-card {
+    height: 100%;
+    padding: 1.75rem;
+    background: var(--rg-card);
+    border: 1px solid var(--rg-line);
+    border-radius: 1.25rem;
+    box-shadow: var(--rg-shadow);
+    transition: transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.feature-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--rg-shadow-lg);
+}
+
+.feature-card h2 {
+    font-weight: 700;
+    margin-top: 1rem;
+}
+
+.feature-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 1rem;
+    background: #FFE4E6;
+    color: var(--rg-accent);
+}
+
+.feature-icon-green {
+    background: #DCFCE7;
+    color: #15803D;
+}
+
+.feature-icon-amber {
+    background: #FEF3C7;
+    color: #B45309;
+}
+
+.operator-band {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 2rem;
+    border-radius: 1.25rem;
+    color: #FFFFFF;
+    background: linear-gradient(120deg, var(--rg-accent) 0%, #9F1239 100%);
+    box-shadow: 0 12px 30px rgba(190, 18, 60, 0.25);
+}
+
+.operator-band h2 {
+    font-weight: 800;
+}
+
+.operator-band .btn-light {
+    --bs-btn-color: var(--rg-accent-dark);
+    align-self: flex-start;
+}
+
+@media (min-width: 768px) {
+    .operator-band {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding: 2.5rem 3rem;
+    }
+
+    .operator-band .btn-light {
+        align-self: center;
+    }
+}
+
+/* ── Signed-in home ──────────────────────────────────────────────────── */
+
+.welcome-banner {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.75rem;
+    overflow: hidden;
+    border-radius: 1.25rem;
+    color: #FFFFFF;
+    background:
+        radial-gradient(circle at 90% 10%, rgba(244, 63, 94, 0.4), transparent 45%),
+        linear-gradient(135deg, var(--rg-navy-deep), var(--rg-navy) 60%, #3730A3);
+    box-shadow: var(--rg-shadow-lg);
+}
+
+@media (min-width: 768px) {
+    .welcome-banner {
+        padding: 2.25rem 2.5rem;
+    }
+}
+
+.welcome-name {
+    font-size: clamp(1.375rem, 3vw, 1.875rem);
+    font-weight: 800;
+    margin-bottom: 0.35rem;
+}
+
+.welcome-role {
+    display: inline-block;
+    margin-bottom: 0;
+    padding: 0.25rem 0.75rem;
+    border-radius: 50rem;
+    background: rgba(255, 255, 255, 0.15);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.welcome-art {
+    display: none;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.welcome-art .icon {
+    width: 72px;
+    height: 72px;
+    stroke-width: 1.5;
+}
+
+@media (min-width: 576px) {
+    .welcome-art {
+        display: block;
+    }
+}
+
+.tile {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    height: 100%;
+    padding: 1.25rem;
+    background: var(--rg-card);
+    border: 1px solid var(--rg-line);
+    border-radius: var(--rg-radius);
+    box-shadow: var(--rg-shadow);
+    color: inherit;
+    text-decoration: none;
+    transition: transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out, border-color 0.15s ease-in-out;
+}
+
+.tile:hover {
+    transform: translateY(-2px);
+    border-color: #C7D0E6;
+    box-shadow: var(--rg-shadow-lg);
+    color: inherit;
+}
+
+.tile-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 0.875rem;
+    background: var(--rg-soft);
+    color: var(--rg-navy);
+    flex-shrink: 0;
+}
+
+.tile-title {
+    display: block;
+    font-weight: 700;
+    color: #111827;
+}
+
+.tile-text {
+    display: block;
+    font-size: 0.875rem;
+    color: #6B7280;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────── */
+
+.app-footer {
+    margin-top: auto;
+    padding: 1.5rem 0;
+    border-top: 1px solid var(--rg-line);
+    background: #FFFFFF;
+    color: #6B7280;
+}
+
+/* ── Accessibility ───────────────────────────────────────────────────── */
+
+/* Touch targets of at least 44px on phones (accessibility baseline). */
+@media (max-width: 575.98px) {
+    .btn,
+    .nav-link {
+        min-height: 44px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .feature-card,
+    .tile {
+        transition: none;
+    }
+
+    .feature-card:hover,
+    .tile:hover {
+        transform: none;
+    }
+}
+
+/* A field with an error (the input tag helper marks it) gets Bootstrap's invalid look. */
+.input-validation-error {
+    border-color: var(--bs-danger);
+}
+
+/* Seat grid: a bus deck drawn row by row, with the aisle as a narrow empty column. */
+.seat-grid {
+    border-collapse: separate;
+    border-spacing: 0.375rem;
+}
+
+.seat-grid td {
+    width: 4.5rem;
+    height: 3.5rem;
+    text-align: center;
+    vertical-align: middle;
+    border-radius: 0.5rem;
+}
+
+.seat-grid .seat {
+    background: var(--rg-soft);
+    border: 1px solid var(--rg-line);
+}
+
+.seat-grid .seat-number {
+    display: block;
+    font-weight: 600;
+    color: var(--rg-navy);
+}
+
+.seat-grid .seat-class {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--bs-secondary-color);
+}
+
+.seat-grid .seat-empty {
+    border: 1px dashed var(--rg-line);
+}
+
+.seat-grid .seat-aisle {
+    width: 1.5rem;
+}
+
+/* A trip's seat map: each seat shows its number, class, fare and status, coloured by status. */
+.seat-map td {
+    width: 7.5rem;
+    height: auto;
+    padding: 0.375rem;
+    font-size: 0.8125rem;
+}
+
+.seat-map .seat-fare,
+.seat-map .seat-status,
+.seat-map .seat-line,
+.seat-map .seat-warning {
+    display: block;
+}
+
+/* Wrap at spaces; break inside a word only when it alone is wider than the seat (a booking ID). */
+.seat-map .seat-line,
+.seat-map .seat-warning {
+    overflow-wrap: anywhere;
+}
+
+.seat-map .seat-line {
+    font-size: 0.75rem;
+    color: var(--bs-secondary-color);
+}
+
+.seat-map .seat-available {
+    background: #ECFDF5;
+    border-color: #6EE7B7;
+}
+
+.seat-map .seat-held {
+    background: #FFFBEB;
+    border-color: #FCD34D;
+}
+
+.seat-map .seat-booked {
+    background: #F3F4F6;
+    border-color: #D1D5DB;
+}
+
+.seat-map .seat-blocked {
+    background: #E5E7EB;
+    border-color: #9CA3AF;
+}
+
+.seat-map .seat-stuck {
+    border: 2px solid var(--rg-accent);
+}
+
+.seat-map .seat-warning {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--rg-accent-dark);
+}
+
+.seat-map .seat-pick {
+    float: right;
+}
+
+/* A bus's cover photo in the bus list: a small fixed-size thumbnail. */
+.bus-cover {
+    width: 4.5rem;
+    height: 3rem;
+    object-fit: cover;
+    border-radius: 0.375rem;
+}
+
+/* The bus form's seat grid: each seat holds its seat number, seat class and a Remove button. */
+.seat-grid-edit td {
+    width: 7.5rem;
+    height: auto;
+    padding: 0.375rem;
+}
+
+/* "This bus has an upper deck" shows the upper deck's section without a page script. */
+.upper-deck-switch:has(input[type="checkbox"]:not(:checked)) ~ .upper-deck {
+    display: none;
+}
+
+/* A photo on the public bus page. */
+.bus-photo {
+    width: 16rem;
+    max-width: 100%;
+    height: 11rem;
+    object-fit: cover;
+    border-radius: var(--rg-radius);
+}
+
+/* The bus search form: a white card; on the visitor home page it overlaps the bottom of the hero. */
+.search-form {
+    background: var(--rg-card);
+    border: 1px solid var(--rg-line);
+    border-radius: var(--rg-radius);
+    box-shadow: var(--rg-shadow-lg);
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+}
+
+.search-form-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--rg-navy);
+    margin-bottom: 1rem;
+}
+
+.search-overlap {
+    position: relative;
+    margin-top: -3rem;
+    z-index: 2;
+}
+
+@media (min-width: 992px) {
+    .search-action {
+        padding-top: 2rem;
+    }
+}
+
+.search-filters {
+    border-top: 1px solid var(--rg-line);
+    margin-top: 1rem;
+    padding-top: 0.5rem;
+}
+
+/* A city box and the suggestions drawn under it by the page script. */
+.city-field {
+    position: relative;
+}
+
+.city-list {
+    position: absolute;
+    z-index: 10;
+    left: 0;
+    right: 0;
+    margin: 0.25rem 0 0;
+    padding: 0.25rem 0;
+    list-style: none;
+    background: var(--rg-card);
+    border: 1px solid var(--rg-line);
+    border-radius: 0.5rem;
+    box-shadow: var(--rg-shadow-lg);
+    max-height: 18rem;
+    overflow-y: auto;
+}
+
+.city-option {
+    padding: 0.5rem 0.875rem;
+    cursor: pointer;
+}
+
+.city-option:hover,
+.city-option.active {
+    background: var(--rg-soft);
+    color: var(--rg-navy);
+}
+
+.city-note:empty {
+    display: none;
+}
+
+.city-note {
+    display: block;
+    font-size: 0.875rem;
+    color: #6B7280;
+    margin-top: 0.25rem;
+}
+
+.city-choices {
+    margin-top: 0.5rem;
+}
+
+/* One search result: the bus, its times, and its price with "See seats". */
+.results-empty {
+    background: var(--rg-card);
+    border: 1px dashed var(--rg-line);
+    border-radius: var(--rg-radius);
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.listing-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.listing-card {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    background: var(--rg-card);
+    border: 1px solid var(--rg-line);
+    border-radius: var(--rg-radius);
+    box-shadow: var(--rg-shadow);
+    padding: 1.25rem;
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.listing-card:hover {
+    box-shadow: var(--rg-shadow-lg);
+    transform: translateY(-1px);
+}
+
+@media (min-width: 992px) {
+    .listing-card {
+        grid-template-columns: 2fr 2fr 1fr;
+        align-items: start;
+    }
+}
+
+.listing-sold-out {
+    opacity: 0.8;
+}
+
+.listing-label {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #6B7280;
+}
+
+.listing-company .listing-label,
+.listing-tag .listing-label,
+.listing-amenities .listing-label {
+    display: inline;
+}
+
+.listing-bus-name {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--rg-navy);
+    text-decoration: none;
+}
+
+.listing-bus-name:hover {
+    text-decoration: underline;
+}
+
+.listing-rating {
+    display: inline-block;
+    margin: 0.25rem 0;
+    padding: 0.125rem 0.5rem;
+    border-radius: 999px;
+    background: #DCFCE7;
+    color: #166534;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.listing-tags,
+.listing-amenities {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    align-items: center;
+    margin-top: 0.375rem;
+    font-size: 0.875rem;
+}
+
+.listing-tag,
+.listing-amenity {
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.375rem;
+    background: var(--rg-soft);
+    color: var(--rg-navy);
+}
+
+.listing-times {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0.5rem;
+    align-items: start;
+}
+
+.listing-journey {
+    text-align: center;
+    font-size: 0.875rem;
+    color: #6B7280;
+}
+
+.listing-stops {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.85rem;
+    color: #6B7280;
+}
+
+.listing-price {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.375rem;
+}
+
+@media (min-width: 992px) {
+    .listing-price {
+        align-items: flex-end;
+    }
+}
+
+.listing-fare {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--rg-navy);
+}
+
+.listing-seats {
+    font-size: 0.875rem;
+    color: #166534;
+}

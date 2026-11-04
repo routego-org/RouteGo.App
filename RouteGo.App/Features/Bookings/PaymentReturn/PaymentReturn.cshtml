@@ -1,0 +1,92 @@
+@page "/my-bookings/{bookingId}/payment-return"
+@model RouteGo.App.Features.Bookings.PaymentReturn.PaymentReturnModel
+@using RouteGo.App.Features.Bookings.PaymentReturn
+@*
+    The address is fixed by the product: Payment sends the customer back here whatever the outcome.
+    The booking is not constrained to an identifier in the route, so an address that is no booking
+    still shows the "couldn't find that booking" message. The page looks again every 2 seconds by
+    asking the browser to refresh (no script needed); the refresh address carries when this visit
+    began so the minute is counted across refreshes.
+*@
+@{
+    ViewData["Title"] = Model.Title();
+}
+
+@section Head {
+    @if (Model.RefreshAddress.Length > 0)
+    {
+        <meta http-equiv="refresh" content="@PaymentReturnHandler.CheckEverySeconds;url=@Model.RefreshAddress" data-refresh />
+    }
+}
+
+<partial name="_PageAlert" model="Model.Alert" />
+
+@if (Model.View != null && Model.View.Booking != null)
+{
+    BookingDetail booking = Model.View.Booking;
+    switch (Model.View.Phase)
+    {
+        case PaymentPhase.Confirming:
+            <h1 class="page-title" data-heading>Confirming your payment</h1>
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+                <p class="lead mb-0" data-wait-text>This usually takes a few seconds. Please do not close this page.</p>
+            </div>
+            @if (Model.View.HoldSecondsLeft != null)
+            {
+                <partial name="_HoldCountdown" model="Model.View.HoldSecondsLeft.Value" />
+            }
+            break;
+
+        case PaymentPhase.Confirmed:
+            <h1 class="page-title" data-heading>Your booking is confirmed.</h1>
+            <div class="card mb-3" data-confirmed>
+                <div class="card-body">
+                    <p class="mb-1" data-route>@BookingDisplay.RouteName(booking.Trip)</p>
+                    <p class="mb-1" data-departure>@IndiaTime.Format(booking.Trip.DepartureAt)</p>
+                    <p class="mb-1" data-seats>@SeatDisplay.SeatList(booking.Seats.Select(seat => seat.SeatNo))</p>
+                    <p class="mb-0 fw-semibold" data-total>Total @TripDisplay.Rupees(booking.TotalAmount)</p>
+                </div>
+            </div>
+            <div class="d-flex flex-wrap gap-3">
+                <a class="btn btn-primary" href="@BookingDisplay.TicketAddress(booking.BookingId)" data-view-ticket>@BookingDisplay.LinkViewTicket</a>
+                <a class="btn btn-outline-primary" href="@BookingDisplay.BookingAddress(booking.BookingId)" data-view-booking>@BookingDisplay.LinkViewBooking</a>
+            </div>
+            break;
+
+        case PaymentPhase.StillConfirming:
+            <h1 class="page-title" data-heading>Confirming your payment</h1>
+            <p class="lead" data-still-confirming>We are still confirming your payment. This can take a few minutes. We will email you when it is done.</p>
+            <div class="d-flex flex-wrap gap-3">
+                <a href="@BookingDisplay.BookingAddress(booking.BookingId)" data-view-booking>@BookingDisplay.LinkViewBooking</a>
+                <a href="@Model.PageAddress()" data-try-again>@Messages.LinkTryAgain</a>
+                <a href="@BookingDisplay.MyBookingsAddress" data-my-bookings>@BookingDisplay.LinkMyBookings</a>
+            </div>
+            break;
+
+        case PaymentPhase.NotCompleted:
+            <h1 class="page-title" data-heading>Your booking was not completed.</h1>
+            <partial name="_BookingOutcome" model="BookingDisplay.OutcomeLines(booking)" />
+            <a href="/" data-search-buses>@BookingDisplay.LinkSearchBuses</a>
+            break;
+
+        case PaymentPhase.Expired:
+            <h1 class="page-title" data-heading data-status>@BookingDisplay.StatusLabel(booking.Status)</h1>
+            <partial name="_BookingOutcome" model="BookingDisplay.OutcomeLines(booking)" />
+            <div class="d-flex flex-wrap gap-3">
+                <a href="@BookingDisplay.BookingAddress(booking.BookingId)" data-view-booking>@BookingDisplay.LinkViewBooking</a>
+                <a href="@BookingDisplay.MyBookingsAddress" data-my-bookings>@BookingDisplay.LinkMyBookings</a>
+            </div>
+            break;
+
+        case PaymentPhase.Cancelled:
+            <h1 class="page-title" data-heading data-status>@BookingDisplay.StatusLabel(booking.Status)</h1>
+            <partial name="_BookingOutcome" model="BookingDisplay.OutcomeLines(booking)" />
+            <a href="@BookingDisplay.BookingAddress(booking.BookingId)" data-view-booking>@BookingDisplay.LinkViewBooking</a>
+            break;
+    }
+}
+
+@section Scripts {
+    <script cdn-src="~/js/hold-countdown.js"></script>
+}

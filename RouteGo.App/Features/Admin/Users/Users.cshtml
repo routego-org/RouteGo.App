@@ -1,0 +1,143 @@
+@page
+@model RouteGo.App.Features.Admin.Users.UsersModel
+@using RouteGo.App.Features.Admin.Users
+@{ ViewData["Title"] = "Users"; }
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+    <h1 class="page-title mb-0">Users</h1>
+    <a class="btn btn-outline-primary rounded-pill" href="/admin/users/new" data-create-admin>Create admin</a>
+</div>
+
+<form method="get" action="/admin/users" class="row g-2 align-items-end mb-4 filter-bar" novalidate data-users-filters>
+    <div class="col-sm-4">
+        <label for="filter-email" class="form-label">Email</label>
+        <input id="filter-email" name="email" type="search" class="form-control" value="@Model.Query.Email" aria-describedby="filter-email-error" />
+        <span asp-validation-for="Query.Email" id="filter-email-error" class="invalid-feedback d-block"></span>
+    </div>
+    <div class="col-sm-3">
+        <label for="filter-role" class="form-label">Role</label>
+        <select id="filter-role" name="role" class="form-select" aria-describedby="filter-role-error">
+            <option value="" selected="@(string.IsNullOrEmpty(Model.Query.Role))">Any role</option>
+            @foreach (string role in new[] { "customer", "operator", "admin" })
+            {
+                <option value="@role" selected="@(Model.Query.Role == role)">@Messages.RoleLabel(role)</option>
+            }
+        </select>
+        <span asp-validation-for="Query.Role" id="filter-role-error" class="invalid-feedback d-block"></span>
+    </div>
+    <div class="col-sm-3">
+        <label for="filter-status" class="form-label">Status</label>
+        <select id="filter-status" name="status" class="form-select" aria-describedby="filter-status-error">
+            <option value="" selected="@(string.IsNullOrEmpty(Model.Query.Status))">Any status</option>
+            @foreach (string status in new[] { "pendingVerification", "pendingApproval", "active", "rejected", "suspended" })
+            {
+                <option value="@status" selected="@(Model.Query.Status == status)">@UsersModel.StateLabel(status)</option>
+            }
+        </select>
+        <span asp-validation-for="Query.Status" id="filter-status-error" class="invalid-feedback d-block"></span>
+    </div>
+    <div class="col-sm-2">
+        <button type="submit" class="btn btn-primary w-100">Search</button>
+    </div>
+</form>
+
+<partial name="_PageAlert" model="Model.Alert" />
+
+@if (Model.Confirmation != null)
+{
+    UserActionConfirmation confirmation = Model.Confirmation;
+    bool isSuspend = confirmation.Action == UserAction.Suspend;
+    <div class="card border-secondary mb-4" data-confirm>
+        <div class="card-body">
+            @if (isSuspend)
+            {
+                <p data-confirm-question>Suspend @confirmation.Email? They will be signed out within 15 minutes and cannot sign in until an admin reactivates them.</p>
+            }
+            else
+            {
+                <p data-confirm-question>Reactivate @confirmation.Email? They will be able to sign in again.</p>
+            }
+            <form method="post" action="@Model.ChangeAddress(confirmation.Action)" asp-antiforgery="true" novalidate data-confirm-form>
+                <input type="hidden" name="Input.UserId" value="@confirmation.UserId" />
+                <input type="hidden" name="Input.Email" value="@confirmation.Email" />
+                <div class="mb-3">
+                    <label asp-for="Input.Reason" class="form-label">Reason</label>
+                    <textarea asp-for="Input.Reason" class="form-control" rows="3" aria-describedby="reason-error"></textarea>
+                    <span asp-validation-for="Input.Reason" id="reason-error" class="invalid-feedback d-block"></span>
+                </div>
+                @if (isSuspend)
+                {
+                    <button type="submit" class="btn btn-danger">Suspend account</button>
+                }
+                else
+                {
+                    <button type="submit" class="btn btn-secondary">Reactivate account</button>
+                }
+                <a class="btn btn-link" href="@Model.ListAddress(Model.Query.PageNumber)" data-cancel>Cancel</a>
+            </form>
+        </div>
+    </div>
+}
+
+@if (Model.Users != null)
+{
+    if (Model.Users.Items.Count == 0)
+    {
+        <p data-users-empty>@(Model.Query.HasFilter() ? "No accounts match your search." : "No accounts yet.")</p>
+    }
+    else
+    {
+        <p class="small text-muted" data-users-showing>@Model.ShowingText()</p>
+        <div class="table-responsive">
+            <table class="table align-middle" data-users-table>
+                <thead>
+                    <tr>
+                        <th scope="col">Email</th>
+                        <th scope="col">Full name</th>
+                        <th scope="col">Mobile number</th>
+                        <th scope="col">Role</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Created at</th>
+                        <th scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (UserSummary user in Model.Users.Items)
+                    {
+                        <tr data-user-row="@user.Email">
+                            <td>@user.Email</td>
+                            <td>@user.FullName</td>
+                            <td>@user.Phone</td>
+                            <td>@Messages.RoleLabel(user.Role)</td>
+                            <td data-user-status>@UsersModel.StateLabel(user.Status)</td>
+                            <td class="small">@IndiaTime.Format(user.CreatedAt)</td>
+                            <td class="text-end">
+                                @if (UsersModel.CanSuspend(user))
+                                {
+                                    <a class="btn btn-sm btn-outline-danger" href="@Model.ConfirmAddress(UserAction.Suspend, user.UserId)" data-suspend>Suspend</a>
+                                }
+                                @if (UsersModel.CanReactivate(user))
+                                {
+                                    <a class="btn btn-sm btn-outline-secondary" href="@Model.ConfirmAddress(UserAction.Reactivate, user.UserId)" data-reactivate>Reactivate</a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (Model.PageCount() > 1)
+        {
+            <nav data-users-pages>
+                <ul class="pagination">
+                    @for (int pageNumber = 1; pageNumber <= Model.PageCount(); pageNumber++)
+                    {
+                        <li class="page-item @(pageNumber == Model.Users.Page ? "active" : "")">
+                            <a class="page-link" href="@Model.ListAddress(pageNumber)">@pageNumber</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    }
+}

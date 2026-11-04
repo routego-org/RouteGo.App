@@ -1,0 +1,104 @@
+@page
+@model RouteGo.App.Features.Operator.Buses.BusesModel
+@using RouteGo.App.Features.Operator.Buses
+@{ ViewData["Title"] = "My buses"; }
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="page-title mb-0">My buses</h1>
+    @if (!Model.IsContentHidden)
+    {
+        <a class="btn btn-primary" href="@BusesModel.NewBusAddress" data-add-bus>Add a bus</a>
+    }
+</div>
+
+@if (!Model.IsContentHidden)
+{
+    <form method="get" action="/operator/buses" class="row g-2 align-items-end mb-4 filter-bar" novalidate data-buses-filters>
+        <div class="col-sm-5">
+            <label for="filter-status" class="form-label">Status</label>
+            <select id="filter-status" name="status" class="form-select">
+                @foreach (string status in BusesModel.Statuses)
+                {
+                    <option value="@status" selected="@((Model.Query.Status ?? "") == status)">@BusesModel.StatusChoice(status)</option>
+                }
+            </select>
+        </div>
+        <div class="col-sm-2">
+            <button type="submit" class="btn btn-primary w-100">Show</button>
+        </div>
+    </form>
+}
+
+<partial name="_PageAlert" model="Model.Alert" />
+
+@if (Model.Buses != null)
+{
+    BusesPage buses = Model.Buses;
+    if (buses.Items.Count == 0)
+    {
+        @if (Model.IsUnfiltered())
+        {
+            <p data-buses-empty>You have no buses yet. Add your first bus to start selling seats.</p>
+        }
+        else
+        {
+            <p data-buses-empty>@Messages.EmptyFiltered("buses")</p>
+        }
+    }
+    else
+    {
+        <p class="small text-muted" data-buses-showing>@FleetDisplay.ShowingText(buses.Page, buses.Items.Count, buses.TotalCount, "buses")</p>
+        <div class="table-responsive">
+            <table class="table align-middle" data-buses>
+                <thead>
+                    <tr>
+                        <th scope="col">Cover photo</th>
+                        <th scope="col">Bus name</th>
+                        <th scope="col">Registration number</th>
+                        <th scope="col">Bus type</th>
+                        <th scope="col">AC</th>
+                        <th scope="col">Seats</th>
+                        <th scope="col">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (BusSummary bus in buses.Items)
+                    {
+                        string? coverPhoto = FleetDisplay.SafePhotoAddress(bus.CoverPhotoUrl);
+                        <tr data-bus>
+                            <td data-cover>
+                                @if (coverPhoto is null)
+                                {
+                                    <span class="small text-muted">No photo yet</span>
+                                }
+                                else
+                                {
+                                    <img class="bus-cover" src="@coverPhoto" alt="@bus.Name" />
+                                }
+                            </td>
+                            <td><a href="@BusesModel.BusAddress(bus.BusId)">@bus.Name</a></td>
+                            <td>@bus.RegistrationNumber</td>
+                            <td>@Messages.BusTypeLabel(bus.BusType)</td>
+                            <td>@Messages.YesNo(bus.IsAc)</td>
+                            <td>@bus.TotalSeats</td>
+                            <td>@FleetDisplay.StatusLabel(bus.Status)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (FleetDisplay.PageCount(buses.TotalCount) > 1)
+        {
+            <nav data-buses-pages>
+                <ul class="pagination">
+                    @for (int pageNumber = 1; pageNumber <= FleetDisplay.PageCount(buses.TotalCount); pageNumber++)
+                    {
+                        <li class="page-item @(pageNumber == buses.Page ? "active" : "")">
+                            <a class="page-link" href="@Model.ListAddress(pageNumber)">@pageNumber</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    }
+}

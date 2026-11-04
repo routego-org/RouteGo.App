@@ -1,0 +1,19 @@
+@page
+@model RouteGo.App.Features.Auth.Verify.VerifyModel
+@{ ViewData["Title"] = "Verify your email"; }
+
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-7 col-xl-6"><div class="form-card">
+        <h1 class="mb-4">Verify your email</h1>
+        <partial name="_PageAlert" model="Model.Alert" />
+
+        @if (Model.CanVerify)
+        {
+            <p data-verify-text>Click the button below to verify your email address.</p>
+            <form method="post" asp-page="/Auth/Verify/Verify" data-verify-form>
+                <input asp-for="Input.Token" type="hidden" />
+                <button type="submit" class="btn btn-primary">Verify my email</button>
+            </form>
+        }
+    </div></div>
+</div>

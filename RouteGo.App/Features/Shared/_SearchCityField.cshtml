@@ -1,0 +1,44 @@
+@model RouteGo.App.Common.UI.SearchCityField
+@using Microsoft.AspNetCore.Mvc.ModelBinding
+@*
+    One city box of the search form (From or To). With the page script, typing asks for suggestions
+    (wwwroot/js/bus-search.js) and picking one fills the hidden identifier and name. Without it, a
+    city typed but not picked comes back from "Search" with the matching cities as choices here.
+*@
+@{
+    string field = SearchForm.Prefix + "." + Model.FieldName;
+    string boxId = "search-" + Model.Role;
+    string listId = boxId + "-list";
+    IReadOnlyList<ModelError> errors = ViewContext.ModelState[field]?.Errors ?? (IReadOnlyList<ModelError>)Array.Empty<ModelError>();
+    string invalid = errors.Count > 0 ? "input-validation-error" : "";
+}
+<div class="city-field" data-city-field="@Model.Role">
+    <label for="@boxId" class="form-label">@Model.Label</label>
+    <input id="@boxId" name="@field" value="@Model.Text" class="form-control @invalid" autocomplete="off" spellcheck="false"
+           role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="@listId" data-city-text />
+    <input type="hidden" name="@(field)Id" value="@Model.CityId" data-city-id />
+    <input type="hidden" name="@(field)Name" value="@Model.CityName" data-city-name />
+    <ul id="@listId" class="city-list" role="listbox" aria-label="@Model.Label" hidden data-city-list></ul>
+    <span class="city-note" role="status" data-city-note>@Model.Suggestions.Note</span>
+    @foreach (ModelError error in errors)
+    {
+        <span class="invalid-feedback d-block" data-city-error>@error.ErrorMessage</span>
+    }
+    @if (Model.Suggestions.Items.Count > 0)
+    {
+        string pickField = Model.Role == SearchForm.FromRole ? nameof(SearchFormInput.FromPick) : nameof(SearchFormInput.ToPick);
+        string pickName = SearchForm.Prefix + "." + pickField;
+        <fieldset class="city-choices" data-city-choices>
+            <legend class="visually-hidden">@Model.Label</legend>
+            @for (int index = 0; index < Model.Suggestions.Items.Count; index++)
+            {
+                SuggestedCity city = Model.Suggestions.Items[index];
+                string choiceId = boxId + "-choice-" + index;
+                <div class="form-check">
+                    <input type="radio" class="form-check-input" id="@choiceId" name="@pickName" value="@SearchFormChecks.PickValue(city)" data-city-choice />
+                    <label class="form-check-label" for="@choiceId">@city.Name</label>
+                </div>
+            }
+        </fieldset>
+    }
+</div>

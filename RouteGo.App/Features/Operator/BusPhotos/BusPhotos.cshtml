@@ -1,0 +1,30 @@
+@page "/operator/buses/{busId:guid}/photos"
+@model RouteGo.App.Features.Operator.BusPhotos.BusPhotosModel
+@using RouteGo.App.Features.Operator.BusPhotos
+@*
+    The photos page sits under its bus's fixed address (/operator/buses/{busId}), so it declares
+    /operator/buses/{busId}/photos instead of /operator/bus-photos.
+*@
+@{
+    PhotosBus? bus = Model.Bus;
+    ViewData["Title"] = bus is null ? "Photos" : $"Photos of {bus.Name}";
+}
+
+@if (bus != null)
+{
+    <h1 class="page-title" data-page-title>Photos of @bus.Name</h1>
+}
+
+@* Each chosen file's progress and result; kept outside the photo section, which is drawn again. *@
+<ul class="list-unstyled mb-3" data-upload-results aria-live="polite"></ul>
+
+<partial name="_Photos" model="Model" />
+
+@if (bus != null)
+{
+    <a href="@Model.BusAddress()" data-back>Back to @bus.Name</a>
+}
+
+@section Scripts {
+    <script cdn-src="~/js/bus-photos.js"></script>
+}

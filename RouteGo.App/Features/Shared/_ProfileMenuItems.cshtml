@@ -1,0 +1,21 @@
+@*
+    The items of the round profile button's menu: who is signed in, My profile, Sign out. The
+    layout puts them in the role menu for customers; operators and admins reach the same pages
+    from their side menu as well.
+*@
+@model PortalShell
+<li class="profile-menu-head">
+    <span class="avatar avatar-lg">@Model.AvatarLetter</span>
+    <span class="d-block text-truncate">
+        <span class="d-block fw-semibold">@Model.RoleLabel</span>
+        <span class="d-block small text-muted text-truncate" data-signed-in-as>Signed in as @Model.Email</span>
+    </span>
+</li>
+<li><a class="dropdown-item" href="/profile"><partial name="_Icon" model="@("user")" /> My profile</a></li>
+<li><hr class="dropdown-divider" /></li>
+<li>
+    @* A protected form submit, so a link opened by someone else cannot sign the person out. *@
+    <form method="post" asp-page="/Auth/Logout/Logout" data-menu-sign-out>
+        <button type="submit" class="dropdown-item text-danger"><partial name="_Icon" model="@("log-out")" /> Sign out</button>
+    </form>
+</li>

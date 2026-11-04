@@ -1,0 +1,26 @@
+@page "/operator/schedules/{scheduleId:guid}/edit"
+@model RouteGo.App.Features.Operator.EditSchedule.EditScheduleModel
+@*
+    The address is fixed by the product (/operator/schedules/{scheduleId}/edit, linked from the
+    schedule page), so the page declares it instead of /operator/edit-schedule.
+*@
+@{
+    string? title = Model.Title();
+    ViewData["Title"] = title ?? "Schedule";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-10 col-xl-8"><div class="form-card">
+        @if (title != null)
+        {
+            <h1 class="mb-3" data-title>@title</h1>
+        }
+
+        <partial name="_PageAlert" model="Model.Alert" />
+
+        @if (Model.Choices != null)
+        {
+            <partial name="_ScheduleForm" model="Model.View()" />
+        }
+    </div></div>
+</div>

@@ -1,0 +1,119 @@
+@model RouteGo.App.Features.Operator.BusPhotos.BusPhotosModel
+@using RouteGo.App.Features.Operator.BusPhotos
+@*
+    The photo section: drawn with the page, and drawn again alone (?handler=Section) by the page
+    script once every chosen file is done.
+*@
+@{
+    PhotosBus? bus = Model.Bus;
+}
+
+<div data-photo-section>
+    <partial name="_PageAlert" model="Model.Alert" />
+
+    @if (bus != null)
+    {
+        IReadOnlyList<BusPhotoItem> photos = bus.Photos;
+        bool isConfirming = Model.ConfirmingPhotoId != null;
+
+        @if (isConfirming)
+        {
+            <div class="card border-danger mb-4" data-confirm>
+                <div class="card-body">
+                    <p data-confirm-question>Delete this photo? Customers will no longer see it.</p>
+                    <form method="post" action="@Model.HandlerAddress("Delete")" asp-antiforgery="true" novalidate data-confirm-form>
+                        <input type="hidden" name="photoId" value="@Model.ConfirmingPhotoId" />
+                        <button type="submit" class="btn btn-danger">Delete photo</button>
+                        <a class="btn btn-link" href="@Model.PageAddress()" data-cancel>Cancel</a>
+                    </form>
+                </div>
+            </div>
+        }
+
+        <h2 class="h5" data-section-title>Photos</h2>
+        @if (photos.Count == 0)
+        {
+            <p class="text-muted" data-no-photos>No photos yet. Customers trust a bus more when they can see it.</p>
+        }
+        else
+        {
+            <p data-photo-count>@photos.Count of @BusPhotosModel.MaxPhotos photos</p>
+        }
+
+        @if (Model.FreePlaces() <= 0)
+        {
+            <p class="text-muted" data-photos-full>This bus has the most photos it can have (@BusPhotosModel.MaxPhotos). Delete one to add another.</p>
+        }
+
+        <ol class="list-unstyled d-flex flex-wrap gap-3 mb-4" data-photos>
+            @for (int index = 0; index < photos.Count; index++)
+            {
+                BusPhotoItem photo = photos[index];
+                string? address = FleetDisplay.SafePhotoAddress(photo.Url);
+                bool isFirst = index == 0;
+                bool isLast = index == photos.Count - 1;
+                <li class="card photo-card" data-photo="@photo.PhotoId">
+                    @if (address != null)
+                    {
+                        <img class="bus-photo card-img-top" src="@address" alt="@bus.Name" />
+                    }
+                    <div class="card-body">
+                        @if (isFirst)
+                        {
+                            <p class="mb-2"><span class="badge text-bg-primary" data-cover>Cover photo</span></p>
+                        }
+                        @if (!isConfirming)
+                        {
+                            <form method="post" action="@Model.HandlerAddress("Order")" asp-antiforgery="true" novalidate class="d-flex flex-wrap gap-2" data-order-form>
+                                <input type="hidden" name="photoId" value="@photo.PhotoId" />
+                                @foreach (BusPhotoItem shown in photos)
+                                {
+                                    <input type="hidden" name="shownOrder" value="@shown.PhotoId" />
+                                }
+                                @if (!isFirst)
+                                {
+                                    <button type="submit" name="move" value="@PhotoMove.Earlier" class="btn btn-sm btn-outline-secondary" data-move="earlier">Move earlier</button>
+                                }
+                                @if (!isLast)
+                                {
+                                    <button type="submit" name="move" value="@PhotoMove.Later" class="btn btn-sm btn-outline-secondary" data-move="later">Move later</button>
+                                }
+                                @if (!isFirst)
+                                {
+                                    <button type="submit" name="move" value="@PhotoMove.Cover" class="btn btn-sm btn-outline-primary" data-move="cover">Make cover photo</button>
+                                }
+                                <a class="btn btn-sm btn-outline-danger" href="@Model.DeleteQuestionAddress(photo.PhotoId)" data-delete>Delete</a>
+                            </form>
+                        }
+                    </div>
+                </li>
+            }
+        </ol>
+
+        @if (Model.FreePlaces() > 0 && !isConfirming)
+        {
+            @* Sending a file needs the page script (it goes straight to photo storage), so the panel
+               stays hidden until the script shows it. The words the script shows are drawn here. *@
+            <form method="post" asp-antiforgery="true" novalidate hidden class="mb-4" data-upload-form
+                  data-free="@Model.FreePlaces()"
+                  data-max-bytes="@BusPhotosModel.MaxFileBytes"
+                  data-slot-address="@Model.HandlerAddress("Slot")"
+                  data-confirm-address="@Model.HandlerAddress("Confirm")"
+                  data-discard-address="@Model.HandlerAddress("Discard")"
+                  data-section-address="@Model.HandlerAddress("Section")"
+                  data-word-waiting="Waiting"
+                  data-word-sending="Sending…"
+                  data-word-too-many-one="You can add {free} more photo. You chose {n}. Choose fewer files."
+                  data-word-too-many="You can add {free} more photos. You chose {n}. Choose fewer files."
+                  data-word-too-large="@UploadAnswers.NotAdded("{file_name}", UploadAnswers.TooLarge)"
+                  data-word-wrong-type="@UploadAnswers.NotAdded("{file_name}", UploadAnswers.WrongType)"
+                  data-word-not-sent="@UploadAnswers.NotAdded("{file_name}", UploadAnswers.NotSent)"
+                  data-word-server-error="@UploadAnswers.NotAdded("{file_name}", UploadAnswers.ServerError)">
+                <p class="small text-muted" data-photo-hint>JPEG or PNG, up to 3 MB each. The first photo is the one customers see first.</p>
+                <label class="btn btn-primary" for="photo-files" data-add-photos>Add photos</label>
+                <input id="photo-files" class="visually-hidden" type="file" multiple accept="image/jpeg,image/png" data-photo-files />
+                <p class="text-danger mt-2" data-upload-refusal></p>
+            </form>
+        }
+    }
+</div>

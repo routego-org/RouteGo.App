@@ -1,0 +1,60 @@
+@model RouteGo.App.Features.Operator.Dashboard.DashboardModel
+@using RouteGo.App.Features.Operator.Dashboard
+@*
+    The trips section: drawn with the page, and drawn again alone (?handler=Trips) by the page script.
+*@
+@{
+    TripsSection tripsSection = Model.Trips;
+    DateOnly? day = Model.Day();
+}
+
+<section class="card mb-4" data-trips>
+    <div class="card-body">
+        <h2 class="h5" data-trips-heading>@(day is null ? "Trips" : DashboardHandler.TripsHeading(day.Value))</h2>
+        <form method="get" action="/operator/dashboard" class="row g-2 align-items-end mb-3" novalidate data-section-form="trips">
+            <input type="hidden" name="from" value="@Model.FromText" />
+            <input type="hidden" name="to" value="@Model.ToText" />
+            <div class="col-sm-3">
+                <label for="trips-day" class="form-label">Day</label>
+                <input id="trips-day" name="day" type="date" class="form-control" value="@Model.DayText" />
+                @if (tripsSection.DayError != null)
+                {
+                    <span class="invalid-feedback d-block" data-day-error>@tripsSection.DayError</span>
+                }
+            </div>
+            <div class="col-sm-3">
+                <button type="submit" class="btn btn-primary w-100" data-show-trips>Show trips</button>
+            </div>
+        </form>
+
+        <partial name="_PageAlert" model="tripsSection.Alert" />
+
+        @if (tripsSection.Trips != null && day != null)
+        {
+            @if (tripsSection.Trips.Items.Count == 0)
+            {
+                <p class="mb-0" data-trips-empty>@DashboardHandler.NoTripsText(day.Value)</p>
+            }
+            else
+            {
+                <p class="lead" data-trips-count>@DashboardHandler.TripsCountText(tripsSection.Trips.Items.Count)</p>
+                <ul class="list-group" data-trip-list>
+                    @foreach (TripOccupancy trip in tripsSection.Trips.Items)
+                    {
+                        <li class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2" data-trip="@trip.TripId">
+                            <div>
+                                <div class="fw-semibold" data-trip-route>@DashboardHandler.RouteName(trip)</div>
+                                <div data-trip-departs>@IndiaTime.Format(trip.DepartureAt)</div>
+                                <div data-trip-sold>@DashboardHandler.SeatsSoldText(trip)</div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a class="btn btn-sm btn-outline-secondary" href="@DashboardHandler.SeatsAddress(trip)" data-trip-seats>Seats</a>
+                                <a class="btn btn-sm btn-outline-secondary" href="@DashboardHandler.PassengersAddress(trip)" data-trip-passengers>Passengers</a>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+        }
+    </div>
+</section>

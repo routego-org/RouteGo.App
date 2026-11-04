@@ -1,0 +1,278 @@
+@model RouteGo.App.Common.UI.BusFormView
+@*
+    The bus form shared by "Add a bus" and "Change {bus name}". It works without a page script: every
+    builder button posts the whole form to the build address, naming its step in BuilderAction, and
+    the page is drawn again with everything typed. Only "Save bus" sends anything to Fleet.
+*@
+@{
+    BusFormInput input = Model.Input;
+    BusFormOutcome outcome = Model.Outcome;
+    List<string> seatClasses = input.NamedSeatClasses();
+    var drawnSeats = new HashSet<int>();
+    string[] decks = new[] { BusFormInput.LowerDeck, BusFormInput.UpperDeck };
+}
+
+<form method="post" action="@Model.SaveAddress" asp-antiforgery="true" novalidate data-bus-form>
+    @* Pressing Enter in a box submits the form's first button; this keeps that "Save bus", not a builder step. *@
+    <button type="submit" class="visually-hidden" tabindex="-1" aria-hidden="true">Save bus</button>
+    @if (Model.SavedName != null)
+    {
+        <input type="hidden" name="SavedName" value="@Model.SavedName" />
+    }
+
+    @if (outcome.Question != null)
+    {
+        <div class="card border-danger mb-4" data-builder-question>
+            <div class="card-body">
+                <p data-question-text>@outcome.Question.Text</p>
+                <button type="submit" class="btn btn-danger" name="BuilderAction" value="@outcome.Question.ConfirmAction" formaction="@Model.BuildAddress" data-question-confirm>@outcome.Question.ConfirmText</button>
+                <button type="submit" class="btn btn-link" name="BuilderAction" value="@outcome.Question.CancelAction" formaction="@Model.BuildAddress" data-question-cancel>Cancel</button>
+            </div>
+        </div>
+    }
+
+    @if (outcome.Notice != null)
+    {
+        <div class="alert alert-info" role="status" data-builder-notice>@outcome.Notice</div>
+    }
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-7">
+            <label asp-for="Input.Name" class="form-label">Bus name</label>
+            <input asp-for="Input.Name" class="form-control" autocomplete="off" data-name />
+            <span asp-validation-for="Input.Name" class="invalid-feedback d-block"></span>
+        </div>
+        <div class="col-md-5">
+            <label asp-for="Input.RegistrationNumber" class="form-label">Registration number</label>
+            <input asp-for="Input.RegistrationNumber" class="form-control" autocomplete="off" data-registration />
+            <span asp-validation-for="Input.RegistrationNumber" class="invalid-feedback d-block" data-registration-error></span>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <fieldset class="col-md-7" data-bus-type>
+            <legend class="form-label fs-6">Bus type</legend>
+            @foreach (string busType in BusFormInput.BusTypeChoices)
+            {
+                string id = "bus-type-" + busType;
+                <div class="form-check form-check-inline">
+                    <input type="radio" class="form-check-input" id="@id" name="Input.BusType" value="@busType" checked="@(input.BusType == busType)" />
+                    <label class="form-check-label" for="@id">@Messages.BusTypeLabel(busType)</label>
+                </div>
+            }
+            <span asp-validation-for="Input.BusType" class="invalid-feedback d-block"></span>
+        </fieldset>
+        <fieldset class="col-md-5" data-ac>
+            <legend class="form-label fs-6">AC</legend>
+            <div class="form-check form-check-inline">
+                <input type="radio" class="form-check-input" id="ac-yes" name="Input.IsAc" value="true" checked="@(input.IsAc == true)" />
+                <label class="form-check-label" for="ac-yes">@Messages.FlagYes</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input type="radio" class="form-check-input" id="ac-no" name="Input.IsAc" value="false" checked="@(input.IsAc == false)" />
+                <label class="form-check-label" for="ac-no">@Messages.FlagNo</label>
+            </div>
+            <span asp-validation-for="Input.IsAc" class="invalid-feedback d-block"></span>
+        </fieldset>
+    </div>
+
+    <fieldset class="mb-4" data-amenities>
+        <legend class="form-label fs-6">Amenities</legend>
+        @foreach (string amenity in BusFormInput.AmenityChoices)
+        {
+            string id = "amenity-" + amenity;
+            <div class="form-check form-check-inline">
+                <input type="checkbox" class="form-check-input" id="@id" name="Input.Amenities" value="@amenity" checked="@input.Amenities.Contains(amenity)" />
+                <label class="form-check-label" for="@id">@Messages.AmenityLabel(amenity)</label>
+            </div>
+        }
+    </fieldset>
+
+    <fieldset class="mb-4" data-seat-classes>
+        <legend class="form-label fs-6">Seat classes</legend>
+        @for (int index = 0; index < input.SeatClasses.Count; index++)
+        {
+            string before = index < input.SeatClassesBefore.Count ? input.SeatClassesBefore[index] ?? "" : "";
+            <div class="d-flex flex-wrap align-items-start gap-2 mb-2" data-seat-class-row>
+                <div>
+                    <input type="text" class="form-control" name="Input.SeatClasses[@index]" value="@input.SeatClasses[index]" aria-label="Seat class" autocomplete="off" data-seat-class-name />
+                    <input type="hidden" name="Input.SeatClassesBefore[@index]" value="@before" />
+                    @Html.ValidationMessage($"Input.SeatClasses[{index}]", null, new { @class = "invalid-feedback d-block", data_seat_class_error = "" })
+                </div>
+                @if (input.CanRemoveSeatClass())
+                {
+                    <button type="submit" class="btn btn-outline-danger" name="BuilderAction" value="@BusFormBuilder.RemoveSeatClassAction(index)" formaction="@Model.BuildAddress" data-remove-seat-class>Remove</button>
+                }
+            </div>
+        }
+        @if (input.CanAddSeatClass())
+        {
+            <button type="submit" class="btn btn-outline-primary" name="BuilderAction" value="@BusFormBuilder.AddSeatClassAction" formaction="@Model.BuildAddress" data-add-seat-class>Add a seat class</button>
+        }
+    </fieldset>
+
+    <p class="text-muted" data-layout-hint>Fill a deck with seats, then remove, rename or change single seats.</p>
+
+    @foreach (string deck in decks)
+    {
+        bool isUpper = deck == BusFormInput.UpperDeck;
+        BusFormDeck size = input.Deck(deck);
+        string field = isUpper ? "Input.Upper" : "Input.Lower";
+        string deckName = Messages.DeckLabel(deck);
+        int deckSeats = input.SeatCount(deck);
+
+        @if (isUpper)
+        {
+            <div class="form-check mb-3 upper-deck-switch">
+                <input type="checkbox" class="form-check-input" id="has-upper-deck" name="Input.HasUpperDeck" value="true" checked="@input.HasUpperDeck" data-has-upper-deck />
+                <input type="hidden" name="Input.HasUpperDeck" value="false" />
+                <label class="form-check-label" for="has-upper-deck">This bus has an upper deck</label>
+            </div>
+        }
+
+        <section class="card mb-4 @(isUpper ? "upper-deck" : "")" data-deck="@deck">
+            <div class="card-body">
+                <h2 class="h5">@deckName</h2>
+                <div class="row g-2 align-items-end mb-3">
+                    <div class="col-sm-3">
+                        <label class="form-label" for="@(deck)-rows">Rows</label>
+                        <select class="form-select" id="@(deck)-rows" name="@(field).Rows" data-rows>
+                            <option value=""></option>
+                            @for (int rows = 1; rows <= BusFormInput.MaxRows; rows++)
+                            {
+                                <option value="@rows" selected="@(size.Rows == rows)">@rows</option>
+                            }
+                        </select>
+                        @Html.ValidationMessage(field + ".Rows", null, new { @class = "invalid-feedback d-block" })
+                    </div>
+                    <div class="col-sm-3">
+                        <label class="form-label" for="@(deck)-columns">Columns</label>
+                        <select class="form-select" id="@(deck)-columns" name="@(field).Columns" data-columns>
+                            <option value=""></option>
+                            @for (int columns = 1; columns <= BusFormInput.MaxColumns; columns++)
+                            {
+                                <option value="@columns" selected="@(size.Columns == columns)">@columns</option>
+                            }
+                        </select>
+                        @Html.ValidationMessage(field + ".Columns", null, new { @class = "invalid-feedback d-block" })
+                    </div>
+                    <div class="col-sm-3">
+                        <label class="form-label" for="@(deck)-aisle">Aisle after column</label>
+                        <select class="form-select" id="@(deck)-aisle" name="@(field).AisleAfterColumn" data-aisle-after>
+                            <option value="">No aisle</option>
+                            @for (int aisle = 1; aisle < BusFormInput.MaxColumns; aisle++)
+                            {
+                                <option value="@aisle" selected="@(size.AisleAfterColumn == aisle)">@aisle</option>
+                            }
+                        </select>
+                        @Html.ValidationMessage(field + ".AisleAfterColumn", null, new { @class = "invalid-feedback d-block" })
+                    </div>
+                    <div class="col-sm-3">
+                        <button type="submit" class="btn btn-outline-primary w-100" name="BuilderAction" value="@BusFormBuilder.FillAction(deck)" formaction="@Model.BuildAddress" data-fill>Fill with seats</button>
+                    </div>
+                </div>
+
+                @if (deckSeats > 0)
+                {
+                    <div class="row g-2 align-items-end mb-3" data-deck-class>
+                        <div class="col-sm-5">
+                            <label class="form-label" for="@(deck)-class-for-all">Seat class</label>
+                            <select class="form-select" id="@(deck)-class-for-all" name="@(field).ClassForAll">
+                                @foreach (string seatClass in seatClasses)
+                                {
+                                    <option value="@seatClass" selected="@string.Equals(size.ClassForAll, seatClass, StringComparison.OrdinalIgnoreCase)">@seatClass</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-sm-4">
+                            <button type="submit" class="btn btn-outline-secondary w-100" name="BuilderAction" value="@BusFormBuilder.DeckClassAction(deck)" formaction="@Model.BuildAddress" data-deck-class-apply>Use for the whole deck</button>
+                        </div>
+                    </div>
+                }
+
+                @if (size.Rows != null && size.Columns != null)
+                {
+                    <div class="table-responsive">
+                        <table class="seat-grid seat-grid-edit" aria-label="@deckName">
+                            <tbody>
+                                @for (int row = 1; row <= size.Rows; row++)
+                                {
+                                    <tr data-seat-row>
+                                        @for (int column = 1; column <= size.Columns; column++)
+                                        {
+                                            int index = input.SeatIndexAt(deck, row, column);
+                                            @if (index < 0)
+                                            {
+                                                <td class="seat-empty" data-place-empty>
+                                                    <button type="submit" class="btn btn-link btn-sm" name="BuilderAction" value="@BusFormBuilder.AddSeatAction(deck, row, column)" formaction="@Model.BuildAddress" data-add-seat>Add a seat</button>
+                                                </td>
+                                            }
+                                            else
+                                            {
+                                                BusFormSeat seat = input.Seats[index];
+                                                drawnSeats.Add(index);
+                                                <td class="seat" data-seat="@seat.Label" data-seat-index="@index">
+                                                    <input type="hidden" name="Input.Seats[@index].Deck" value="@seat.Deck" />
+                                                    <input type="hidden" name="Input.Seats[@index].Row" value="@seat.Row" />
+                                                    <input type="hidden" name="Input.Seats[@index].Column" value="@seat.Column" />
+                                                    <input type="text" class="form-control form-control-sm mb-1" name="Input.Seats[@index].Label" value="@seat.Label" aria-label="Seat number" autocomplete="off" data-seat-label />
+                                                    <select class="form-select form-select-sm mb-1" name="Input.Seats[@index].SeatClass" aria-label="Seat class" data-seat-class>
+                                                        @if (!seatClasses.Contains(seat.SeatClass ?? "", StringComparer.OrdinalIgnoreCase))
+                                                        {
+                                                            <option value="" selected></option>
+                                                        }
+                                                        @foreach (string seatClass in seatClasses)
+                                                        {
+                                                            <option value="@seatClass" selected="@string.Equals(seat.SeatClass, seatClass, StringComparison.OrdinalIgnoreCase)">@seatClass</option>
+                                                        }
+                                                    </select>
+                                                    @Html.ValidationMessage($"Input.Seats[{index}].Label", null, new { @class = "invalid-feedback d-block", data_seat_label_error = "" })
+                                                    @Html.ValidationMessage($"Input.Seats[{index}].SeatClass", null, new { @class = "invalid-feedback d-block", data_seat_class_error = "" })
+                                                    <button type="submit" class="btn btn-link btn-sm text-danger p-0" name="BuilderAction" value="@BusFormBuilder.RemoveSeatAction(index)" formaction="@Model.BuildAddress" data-remove-seat>Remove</button>
+                                                </td>
+                                            }
+                                            @if (size.HasAisleWithin() && size.AisleAfterColumn == column)
+                                            {
+                                                <td class="seat-aisle" aria-hidden="true" data-aisle></td>
+                                            }
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </section>
+    }
+
+    @* Seats the grid cannot place yet (a deck with no size chosen) still go with every post. *@
+    @for (int index = 0; index < input.Seats.Count; index++)
+    {
+        if (!drawnSeats.Contains(index))
+        {
+            BusFormSeat seat = input.Seats[index];
+            <input type="hidden" name="Input.Seats[@index].Label" value="@seat.Label" />
+            <input type="hidden" name="Input.Seats[@index].SeatClass" value="@seat.SeatClass" />
+            <input type="hidden" name="Input.Seats[@index].Deck" value="@seat.Deck" />
+            <input type="hidden" name="Input.Seats[@index].Row" value="@seat.Row" />
+            <input type="hidden" name="Input.Seats[@index].Column" value="@seat.Column" />
+        }
+    }
+
+    <div class="mb-4" data-seat-counts>
+        <p class="fw-semibold mb-1" data-seat-count>@BusFormBuilder.SeatCountText(input.Seats.Count)</p>
+        @if (input.Seats.Count > BusFormInput.MaxSeats)
+        {
+            <p class="text-danger mb-1" data-too-many-seats>@BusFormBuilder.TooManySeatsText(input.Seats.Count)</p>
+        }
+        @foreach (string seatClass in seatClasses)
+        {
+            <p class="small text-muted mb-0" data-class-count>@BusFormBuilder.SeatClassCountText(seatClass, input.SeatsWithClass(seatClass))</p>
+        }
+        @Html.ValidationMessage("Input.Seats", null, new { @class = "invalid-feedback d-block", data_seats_error = "" })
+    </div>
+
+    <button type="submit" class="btn btn-primary" data-save>Save bus</button>
+    <a class="btn btn-link" href="@Model.CancelAddress" data-cancel>Cancel</a>
+</form>

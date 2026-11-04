@@ -1,0 +1,20 @@
+@page
+@model RouteGo.App.Features.Error.ErrorModel
+@{
+    ViewData["Title"] = Model.IsNotFound ? "Page not found" : "Something went wrong";
+}
+
+@* Reached through app.UseExceptionHandler("/error") and app.UseStatusCodePagesWithReExecute: the
+   page runs after the access check, so an unknown address shows 404 to a visitor too, and the layout
+   still shows the role menu of whoever is signed in. *@
+<div class="alert alert-warning" role="alert" data-error-page>
+    @if (Model.IsNotFound)
+    {
+        <p class="mb-2" data-problem="page-not-found">@Messages.ProblemPageNotFound</p>
+    }
+    else
+    {
+        <p class="mb-2" data-problem="internal-error">@Messages.ProblemInternalError(Model.TraceId)</p>
+    }
+    <a class="alert-link" href="/">@Messages.AccessGoHome</a>
+</div>

@@ -1,0 +1,136 @@
+@page
+@model RouteGo.App.Features.Admin.Trips.TripsModel
+@using RouteGo.App.Features.Admin.Trips
+@{
+    ViewData["Title"] = "Trips";
+    TripDates? dates = Model.Dates;
+}
+
+<h1 class="page-title mb-3">Trips</h1>
+
+<form method="get" action="/admin/trips" class="row g-2 align-items-end mb-3 filter-bar" novalidate data-trip-search-filters>
+    @if (Model.Cities != null)
+    {
+        <div class="col-sm-3">
+            <label for="filter-source-city" class="form-label">From city</label>
+            <select id="filter-source-city" name="sourceCityId" class="form-select">
+                <option value="" selected="@(Model.Query.SourceCityId is null)">All</option>
+                @foreach (SearchCity city in Model.Cities)
+                {
+                    <option value="@city.CityId" selected="@(Model.Query.SourceCityId == city.CityId)">@city.Label()</option>
+                }
+            </select>
+        </div>
+        <div class="col-sm-3">
+            <label for="filter-destination-city" class="form-label">To city</label>
+            <select id="filter-destination-city" name="destinationCityId" class="form-select">
+                <option value="" selected="@(Model.Query.DestinationCityId is null)">All</option>
+                @foreach (SearchCity city in Model.Cities)
+                {
+                    <option value="@city.CityId" selected="@(Model.Query.DestinationCityId == city.CityId)">@city.Label()</option>
+                }
+            </select>
+        </div>
+    }
+    <div class="col-sm-2">
+        <label for="filter-from" class="form-label">From</label>
+        <input id="filter-from" name="from" type="date" class="form-control" value="@(dates is null ? Model.Query.From : TripDisplay.WireDate(dates.From))" />
+    </div>
+    <div class="col-sm-2">
+        <label for="filter-to" class="form-label">To</label>
+        <input id="filter-to" name="to" type="date" class="form-control" value="@(dates is null ? Model.Query.To : TripDisplay.WireDate(dates.To))" />
+    </div>
+    <div class="col-sm-2">
+        <label for="filter-status" class="form-label">Status</label>
+        <select id="filter-status" name="status" class="form-select">
+            @foreach (string status in TripDisplay.TripStatusChoices)
+            {
+                <option value="@status" selected="@((Model.Query.Status ?? "") == status)">@TripDisplay.TripStatusChoice(status)</option>
+            }
+        </select>
+    </div>
+    @if (Model.Query.HasCompany())
+    {
+        <input type="hidden" name="operatorId" value="@Model.Query.OperatorId" />
+        <input type="hidden" name="operatorName" value="@Model.Query.OperatorName" />
+    }
+    <div class="col-sm-2">
+        <button type="submit" class="btn btn-primary w-100">Search</button>
+    </div>
+    @if (dates is null)
+    {
+        <div class="col-12">
+            <span class="invalid-feedback d-block" data-date-range-error>@Messages.ValidationDateRange</span>
+        </div>
+    }
+</form>
+
+@if (Model.Query.HasCompany())
+{
+    <p data-one-company>@Model.CompanyText() <a href="@Model.AllCompaniesAddress()" data-all-companies>Show all companies</a></p>
+}
+
+<partial name="_PageAlert" model="Model.Alert" />
+
+@if (Model.Trips != null)
+{
+    FoundTripsPage trips = Model.Trips;
+    if (trips.Items.Count == 0)
+    {
+        <p data-trips-empty>@Messages.EmptyFiltered(TripsModel.Items)</p>
+    }
+    else
+    {
+        <p class="small text-muted" data-trips-showing>@FleetDisplay.ShowingText(trips.Page, trips.Items.Count, trips.TotalCount, TripsModel.Items)</p>
+        <div class="table-responsive">
+            <table class="table align-middle" data-trips>
+                <thead>
+                    <tr>
+                        <th scope="col">Company name</th>
+                        <th scope="col">Travel date</th>
+                        <th scope="col">Route</th>
+                        <th scope="col">Departs</th>
+                        <th scope="col">Arrives</th>
+                        <th scope="col">Bus</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Fares</th>
+                        <th scope="col">Cancellation reason</th>
+                        <th scope="col">Cancelled at</th>
+                        <th scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (FoundTrip trip in trips.Items)
+                    {
+                        <tr data-trip="@trip.TripId">
+                            <td>@trip.OperatorName</td>
+                            <td>@IndiaTime.FormatDay(trip.ServiceDate)</td>
+                            <td>@trip.RouteName()</td>
+                            <td>@IndiaTime.FormatTime(trip.DepartureAt)</td>
+                            <td>@TripDisplay.Arrives(trip.ServiceDate, trip.ArrivalAt)</td>
+                            <td><a href="/buses/@trip.BusId">@trip.BusName</a></td>
+                            <td>@TripDisplay.TripStatusLabel(trip.Status)</td>
+                            <td>@TripDisplay.FaresText(trip.ClassFares, null)</td>
+                            <td>@trip.CancelReason</td>
+                            <td>@(trip.CancelledAt is null ? "" : IndiaTime.Format(trip.CancelledAt.Value))</td>
+                            <td><a class="btn btn-sm btn-outline-secondary" href="@SeatDisplay.WithRoute($"/admin/trips/{trip.TripId}/seats", trip.RouteName())" data-trip-seats>Seats</a> <a class="btn btn-sm btn-outline-secondary" href="/admin/bookings?tripId=@trip.TripId" data-trip-bookings>Bookings</a></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (FleetDisplay.PageCount(trips.TotalCount) > 1)
+        {
+            <nav data-trips-pages>
+                <ul class="pagination">
+                    @for (int pageNumber = 1; pageNumber <= FleetDisplay.PageCount(trips.TotalCount); pageNumber++)
+                    {
+                        <li class="page-item @(pageNumber == trips.Page ? "active" : "")">
+                            <a class="page-link" href="@Model.ListAddress(pageNumber)">@pageNumber</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    }
+}

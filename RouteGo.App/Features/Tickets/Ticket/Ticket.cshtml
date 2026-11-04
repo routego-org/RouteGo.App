@@ -1,0 +1,35 @@
+@page "/tickets/{bookingId}"
+@model RouteGo.App.Features.Tickets.Ticket.TicketModel
+@using RouteGo.App.Features.Tickets.Ticket
+@*
+    The address is fixed by the product: the "your ticket is ready" email links to it. When a ticket can
+    be opened the page model redirects to the PDF and nothing here is drawn. The booking is not
+    constrained to an identifier in the route, so an address that is no booking still shows the
+    "couldn't find that booking" message. While the ticket is being made the page looks again every
+    5 seconds by asking the browser to refresh (no script needed); the refresh address carries when this
+    visit began so the two minutes are counted across refreshes.
+*@
+@{
+    ViewData["Title"] = "Your ticket";
+}
+
+@section Head {
+    @if (Model.RefreshAddress.Length > 0)
+    {
+        <meta http-equiv="refresh" content="@TicketPageHandler.CheckEverySeconds;url=@Model.RefreshAddress" data-refresh />
+    }
+}
+
+<h1 class="page-title" data-heading>Your ticket</h1>
+
+@if (Model.View != null && Model.View.Phase == TicketPhase.Preparing)
+{
+    <div class="d-flex align-items-center gap-3 mb-3">
+        <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+        <p class="lead mb-0" data-wait-text>Your ticket is being prepared. This usually takes a few seconds.</p>
+    </div>
+}
+else
+{
+    <partial name="_PageAlert" model="Model.View?.Alert" />
+}

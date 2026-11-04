@@ -1,0 +1,153 @@
+@page
+@model RouteGo.App.Features.Operator.Trips.TripsModel
+@using System.Globalization
+@using RouteGo.App.Features.Operator.Trips
+@{
+    ViewData["Title"] = "My trips";
+    TripDates? dates = Model.Dates;
+}
+
+<h1 class="page-title mb-3">My trips</h1>
+
+@if (!Model.IsContentHidden)
+{
+    <form method="get" action="/operator/trips" class="row g-2 align-items-end mb-3 filter-bar" novalidate data-trips-filters>
+        <div class="col-sm-2">
+            <label for="filter-from" class="form-label">From</label>
+            <input id="filter-from" name="from" type="date" class="form-control" value="@(dates?.From.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) ?? Model.Query.From)" />
+        </div>
+        <div class="col-sm-2">
+            <label for="filter-to" class="form-label">To</label>
+            <input id="filter-to" name="to" type="date" class="form-control" value="@(dates?.To.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) ?? Model.Query.To)" />
+        </div>
+        <div class="col-sm-2">
+            <label for="filter-status" class="form-label">Status</label>
+            <select id="filter-status" name="status" class="form-select">
+                @foreach (string status in TripDisplay.TripStatusChoices)
+                {
+                    <option value="@status" selected="@((Model.Query.Status ?? "") == status)">@TripDisplay.TripStatusChoice(status)</option>
+                }
+            </select>
+        </div>
+        @if (Model.Buses != null)
+        {
+            <div class="col-sm-3">
+                <label for="filter-bus" class="form-label">Bus</label>
+                <select id="filter-bus" name="busId" class="form-select">
+                    <option value="" selected="@(Model.Query.BusId is null)">All</option>
+                    @foreach (TripBus bus in Model.Buses)
+                    {
+                        <option value="@bus.BusId" selected="@(Model.Query.BusId == bus.BusId)">@bus.Name</option>
+                    }
+                </select>
+            </div>
+        }
+        @if (Model.Query.ScheduleId != null)
+        {
+            <input type="hidden" name="scheduleId" value="@Model.Query.ScheduleId" />
+        }
+        <div class="col-sm-2">
+            <button type="submit" class="btn btn-primary w-100">Show</button>
+        </div>
+        @if (dates is null)
+        {
+            <div class="col-12">
+                <span class="invalid-feedback d-block" data-date-range-error>@Messages.ValidationDateRange</span>
+            </div>
+        }
+    </form>
+
+    @if (Model.Query.ScheduleId != null)
+    {
+        <p data-one-schedule>Showing the trips of one schedule. <a href="@TripsModel.AllTripsAddress" data-all-trips>Show all trips</a></p>
+    }
+}
+
+<partial name="_PageAlert" model="Model.Alert" />
+
+@if (Model.FareTrip != null)
+{
+    <partial name="_FareForm" model="Model" />
+}
+
+@if (Model.CancelTrip != null)
+{
+    <partial name="_CancelForm" model="Model" />
+}
+
+@if (Model.Trips != null && !Model.IsContentHidden)
+{
+    TripsPage trips = Model.Trips;
+    DateTimeOffset now = Model.Now();
+    if (trips.Items.Count == 0)
+    {
+        <p data-trips-empty>@Messages.EmptyFiltered("trips")</p>
+    }
+    else
+    {
+        <p class="small text-muted" data-trips-showing>@FleetDisplay.ShowingText(trips.Page, trips.Items.Count, trips.TotalCount, "trips")</p>
+        <div class="table-responsive">
+            <table class="table align-middle" data-trips>
+                <thead>
+                    <tr>
+                        <th scope="col">Travel date</th>
+                        <th scope="col">Route</th>
+                        <th scope="col">Departs</th>
+                        <th scope="col">Arrives</th>
+                        <th scope="col">Bus</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Fares</th>
+                        <th scope="col">Cancellation reason</th>
+                        <th scope="col">Cancelled at</th>
+                        <th scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (TripDetails trip in trips.Items)
+                    {
+                        <tr data-trip="@trip.TripId">
+                            <td>@IndiaTime.FormatDay(trip.ServiceDate)</td>
+                            <td>@trip.RouteName()</td>
+                            <td>@IndiaTime.FormatTime(trip.DepartureAt)</td>
+                            <td>@TripDisplay.Arrives(trip.ServiceDate, trip.ArrivalAt)</td>
+                            <td><a href="/buses/@trip.BusId">@trip.BusName</a></td>
+                            <td>@TripDisplay.TripStatusLabel(trip.Status)</td>
+                            <td>@TripDisplay.FaresText(trip.ClassFares, null)</td>
+                            <td>@trip.CancelReason</td>
+                            <td>@(trip.CancelledAt is null ? "" : IndiaTime.Format(trip.CancelledAt.Value))</td>
+                            <td data-trip-actions>
+                                @if (TripActions.CanChangeFares(trip, now))
+                                {
+                                    <a class="btn btn-sm btn-outline-primary" href="@Model.FaresAddress(trip.TripId)" data-change-fares>Change fares</a>
+                                }
+                                @if (TripActions.IsFrozen(trip, now))
+                                {
+                                    <span class="small text-muted d-block" data-fares-frozen>Fares are frozen (less than 6 hours to departure).</span>
+                                }
+                                @if (trip.IsScheduled)
+                                {
+                                    <a class="btn btn-sm btn-outline-danger" href="@Model.CancelAddress(trip.TripId)" data-cancel-trip>Cancel trip</a>
+                                }
+                                <a class="btn btn-sm btn-outline-secondary" href="@SeatDisplay.WithRoute($"/operator/trips/{trip.TripId}/seats", trip.RouteName())" data-trip-seats>Seats</a>
+                                <a class="btn btn-sm btn-outline-secondary" href="@SeatDisplay.WithRoute($"/operator/trips/{trip.TripId}/passengers", trip.RouteName())" data-trip-passengers>Passengers</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (FleetDisplay.PageCount(trips.TotalCount) > 1)
+        {
+            <nav data-trips-pages>
+                <ul class="pagination">
+                    @for (int pageNumber = 1; pageNumber <= FleetDisplay.PageCount(trips.TotalCount); pageNumber++)
+                    {
+                        <li class="page-item @(pageNumber == trips.Page ? "active" : "")">
+                            <a class="page-link" href="@Model.ListAddress(pageNumber)">@pageNumber</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    }
+}

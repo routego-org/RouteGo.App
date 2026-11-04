@@ -1,0 +1,64 @@
+@*
+    A trip's seats drawn deck by deck, each seat at its row and column (SeatDisplay.ToGrid), shared
+    by the public seat map and the operator's and the admin's seat pages. A seat that can be picked
+    carries a tick box posted as its pick field, so picking works without a page script.
+*@
+@model IReadOnlyList<SeatDisplay.DeckLayout>
+@foreach (SeatDisplay.DeckLayout deck in Model)
+{
+    <section class="card mb-4" data-deck="@deck.Deck">
+        <div class="card-body">
+            <h2 class="h5" data-deck-name>@deck.Name</h2>
+            <div class="table-responsive">
+                <table class="seat-grid seat-map" aria-label="@deck.Name">
+                    <tbody>
+                        @foreach (SeatDisplay.Seat?[] row in deck.Rows)
+                        {
+                            <tr data-seat-row>
+                                @foreach (SeatDisplay.Seat? seat in row)
+                                {
+                                    @if (seat is null)
+                                    {
+                                        <td class="seat-empty" data-place-empty></td>
+                                        continue;
+                                    }
+
+                                    string stuck = seat.Warning is null ? "" : "seat-stuck";
+                                    <td class="seat seat-@seat.Status @stuck" data-seat="@seat.SeatNo" data-status="@seat.Status">
+                                        @if (seat.PickField != null)
+                                        {
+                                            <input type="checkbox" class="form-check-input seat-pick" id="seat-@seat.SeatNo" name="@seat.PickField" value="@seat.SeatNo" checked="@seat.IsPicked" data-amount="@seat.Fare" data-pick />
+                                            <label class="seat-number" for="seat-@seat.SeatNo">@seat.SeatNo</label>
+                                        }
+                                        else
+                                        {
+                                            <span class="seat-number">@seat.SeatNo</span>
+                                        }
+                                        <span class="seat-class" data-seat-class>@seat.SeatClass</span>
+                                        <span class="seat-fare" data-fare>@TripDisplay.Rupees(seat.Fare)</span>
+                                        <span class="seat-status" data-status-label>@SeatDisplay.StatusLabel(seat.Status)</span>
+                                        @foreach (SeatDisplay.SeatLine line in seat.Lines)
+                                        {
+                                            @if (line.Href is null)
+                                            {
+                                                <span class="seat-line" data-line="@line.Label">@line.Label: @line.Value</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="seat-line" data-line="@line.Label">@line.Label: <a href="@line.Href">@line.Value</a></span>
+                                            }
+                                        }
+                                        @if (seat.Warning != null)
+                                        {
+                                            <span class="seat-warning" data-stuck>@seat.Warning</span>
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+}

@@ -1,0 +1,23 @@
+@model RouteGo.App.Features.Operator.Trips.TripsModel
+@using RouteGo.App.Features.Operator.Trips
+@*
+    The question before a trip is cancelled, opened by its "Cancel trip" link above the list. Nothing
+    is sent until "Cancel trip" is pressed with a reason.
+*@
+@{ TripDetails trip = Model.CancelTrip!; }
+
+<div class="card border-danger mb-4" data-confirm>
+    <div class="card-body">
+        <p data-confirm-question>Cancel the trip @TripActions.When(trip)? Customers who booked it will get a refund. You cannot undo this.</p>
+        <form method="post" action="@Model.PostAddress("Cancel")" asp-antiforgery="true" novalidate data-cancel-form>
+            <input type="hidden" asp-for="CancelInput.TripId" />
+            <div class="mb-3">
+                <label asp-for="CancelInput.Reason" class="form-label">Reason</label>
+                <textarea asp-for="CancelInput.Reason" class="form-control" rows="2" data-reason></textarea>
+                <span asp-validation-for="CancelInput.Reason" class="invalid-feedback d-block" data-reason-error></span>
+            </div>
+            <button type="submit" class="btn btn-danger" data-confirm-cancel>Cancel trip</button>
+            <a class="btn btn-link" href="@Model.ListAddress(Model.Query.PageNumber)" data-go-back>Go back</a>
+        </form>
+    </div>
+</div>

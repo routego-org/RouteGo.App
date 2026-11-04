@@ -1,0 +1,10 @@
+@*
+    How a booking ended — the failure reason, the note on an expired booking, who cancelled and the
+    refund — as BookingDisplay.OutcomeLines gives it, shared by the booking page and the payment
+    return page.
+*@
+@model IReadOnlyList<BookingDisplay.OutcomeLine>
+@foreach (BookingDisplay.OutcomeLine line in Model)
+{
+    <p class="mb-2" data-outcome="@line.Key">@line.Text</p>
+}

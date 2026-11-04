@@ -1,0 +1,7 @@
+@*
+    The hold countdown (bookings rule 7): "Your seats are held for 6 minutes 12 seconds." as the page
+    loaded. wwwroot/js/hold-countdown.js counts it down by itself and loads the page again once at
+    zero; without the script the time simply stays as loaded.
+*@
+@model int
+<p class="alert alert-info" role="timer" data-hold-countdown data-seconds-left="@Model">Your seats are held for <span data-time-left>@BookingDisplay.TimeLeftText(Model)</span>.</p>

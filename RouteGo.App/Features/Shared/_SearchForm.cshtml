@@ -1,0 +1,110 @@
+@model RouteGo.App.Common.UI.SearchFormView
+@using Microsoft.AspNetCore.Mvc.ModelBinding
+@*
+    The bus search form, the same on the home page and on /bus-search. "Search" posts to the page's
+    own address: a failed check draws the form again there (the address does not change), a passed
+    one goes to the results address. On the results page the filters and the sort are part of the
+    same form, so one "Search" applies everything together.
+*@
+@{
+    SearchFormInput input = Model.Input;
+    string dateField = SearchForm.Prefix + "." + nameof(SearchFormInput.Date);
+    string minFareField = SearchForm.Prefix + "." + nameof(SearchFormInput.MinFare);
+    string maxFareField = SearchForm.Prefix + "." + nameof(SearchFormInput.MaxFare);
+}
+
+<form method="post" action="@Model.PostAddress" asp-antiforgery="true" novalidate class="search-form"
+      data-search-form data-cities-url="@SearchForm.CitiesAddress" data-unavailable-text="@SearchForm.SuggestionsUnavailable">
+    @if (Model.ShowsTitle)
+    {
+        <h2 class="search-form-title" data-search-title>@SearchForm.FormTitle</h2>
+    }
+    <div class="row g-3 align-items-start">
+        <div class="col-md-6 col-lg-4">
+            <partial name="_SearchCityField" model="Model.FromField()" />
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <partial name="_SearchCityField" model="Model.ToField()" />
+        </div>
+        <div class="col-sm-6 col-lg-2">
+            <label for="search-date" class="form-label">@SearchForm.DateLabel</label>
+            <input id="search-date" type="date" name="@dateField" value="@input.Date" min="@SearchForm.WireDate(Model.Today)" class="form-control" data-date />
+            @foreach (ModelError error in ViewContext.ModelState[dateField]?.Errors ?? (IReadOnlyList<ModelError>)Array.Empty<ModelError>())
+            {
+                <span class="invalid-feedback d-block" data-date-error>@error.ErrorMessage</span>
+            }
+        </div>
+        <div class="col-sm-6 col-lg-2 search-action">
+            <button type="submit" class="btn btn-accent w-100" data-search>Search</button>
+        </div>
+    </div>
+
+    @if (Model.ShowsFilters)
+    {
+        <div class="search-filters row g-3" data-search-filters>
+            <fieldset class="col-12 col-lg-4" data-bus-types>
+                <legend class="form-label fs-6">@SearchForm.BusTypeLabel</legend>
+                @foreach (SearchChoice busType in SearchForm.BusTypeChoices)
+                {
+                    string busTypeId = "search-bus-type-" + busType.Value;
+                    <div class="form-check form-check-inline">
+                        <input type="checkbox" class="form-check-input" id="@busTypeId" name="@(SearchForm.Prefix).BusTypes" value="@busType.Value" checked="@input.BusTypes.Contains(busType.Value)" />
+                        <label class="form-check-label" for="@busTypeId">@busType.Label</label>
+                    </div>
+                }
+            </fieldset>
+            <div class="col-6 col-md-4 col-lg-2">
+                <label for="search-ac" class="form-label">@SearchForm.AcLabel</label>
+                <select id="search-ac" name="@(SearchForm.Prefix).IsAc" class="form-select" data-ac-filter>
+                    @foreach (SearchChoice choice in SearchForm.AcChoices)
+                    {
+                        <option value="@choice.Value" selected="@((input.IsAc ?? "") == choice.Value)">@choice.Label</option>
+                    }
+                </select>
+            </div>
+            <div class="col-6 col-md-4 col-lg-3">
+                <label for="search-departure" class="form-label">@SearchForm.DepartureLabel</label>
+                <select id="search-departure" name="@(SearchForm.Prefix).Departure" class="form-select" data-departure-filter>
+                    @foreach (SearchChoice choice in SearchForm.DepartureChoices())
+                    {
+                        <option value="@choice.Value" selected="@((input.Departure ?? "") == choice.Value)">@choice.Label</option>
+                    }
+                </select>
+            </div>
+            <div class="col-6 col-md-4 col-lg-3">
+                <label for="search-rating" class="form-label">@SearchForm.RatingLabel</label>
+                <select id="search-rating" name="@(SearchForm.Prefix).MinRating" class="form-select" data-rating-filter>
+                    @foreach (SearchChoice choice in SearchForm.RatingChoices)
+                    {
+                        <option value="@choice.Value" selected="@((input.MinRating ?? "") == choice.Value)">@choice.Label</option>
+                    }
+                </select>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+                <label for="search-min-fare" class="form-label">@SearchForm.PriceFromLabel (₹)</label>
+                <input id="search-min-fare" name="@minFareField" value="@input.MinFare" class="form-control" inputmode="numeric" autocomplete="off" data-min-fare />
+                @foreach (ModelError error in ViewContext.ModelState[minFareField]?.Errors ?? (IReadOnlyList<ModelError>)Array.Empty<ModelError>())
+                {
+                    <span class="invalid-feedback d-block" data-min-fare-error>@error.ErrorMessage</span>
+                }
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+                <label for="search-max-fare" class="form-label">@SearchForm.PriceUpToLabel (₹)</label>
+                <input id="search-max-fare" name="@maxFareField" value="@input.MaxFare" class="form-control" inputmode="numeric" autocomplete="off" data-max-fare />
+                @foreach (ModelError error in ViewContext.ModelState[maxFareField]?.Errors ?? (IReadOnlyList<ModelError>)Array.Empty<ModelError>())
+                {
+                    <span class="invalid-feedback d-block" data-max-fare-error>@error.ErrorMessage</span>
+                }
+            </div>
+            <div class="col-6 col-md-4 col-lg-3">
+                <label for="search-sort" class="form-label">@SearchForm.SortLabel</label>
+                <select id="search-sort" name="@(SearchForm.Prefix).Sort" class="form-select" data-sort>
+                    @foreach (SearchChoice choice in SearchForm.SortChoices)
+                    {
+                        <option value="@choice.Value" selected="@((input.Sort ?? "") == choice.Value)">@choice.Label</option>
+                    }
+                </select>
+            </div>
+        </div>
+    }
+</form>

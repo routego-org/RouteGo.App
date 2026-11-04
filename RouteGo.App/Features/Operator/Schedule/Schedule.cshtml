@@ -1,0 +1,127 @@
+@page "/operator/schedules/{scheduleId:guid}"
+@model RouteGo.App.Features.Operator.Schedule.ScheduleModel
+@using System.Globalization
+@using RouteGo.App.Features.Operator.Schedule
+@*
+    The schedule's address is fixed by the product (/operator/schedules/{scheduleId}, linked from the
+    schedule list, the schedule form and the trip list), so the page declares it instead of
+    /operator/schedule.
+*@
+@{
+    SchedulePageData? data = Model.Data;
+    ViewData["Title"] = data is null ? "Schedule" : data.Name();
+}
+
+@if (data != null)
+{
+    <h1 class="page-title" data-schedule-name>@data.Name()</h1>
+}
+
+<partial name="_PageAlert" model="Model.Alert" />
+
+@if (data != null)
+{
+    ScheduleDetails schedule = data.Schedule;
+
+    @if (Model.IsConfirming)
+    {
+        <div class="card border-danger mb-4" data-confirm>
+            <div class="card-body">
+                <p data-confirm-question>@Messages.ConfirmTripsWillBeCancelled</p>
+                <form method="post" action="@Model.StopAddress()" asp-antiforgery="true" novalidate data-confirm-form>
+                    <button type="submit" class="btn btn-danger">Stop schedule</button>
+                    <a class="btn btn-link" href="@Model.ScheduleAddress()" data-go-back>Go back</a>
+                </form>
+            </div>
+        </div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <dl class="row mb-0" data-schedule-fields>
+                <dt class="col-sm-3">Route</dt>
+                <dd class="col-sm-9" data-route>
+                    @if (data.Route != null)
+                    {
+                        <span data-route-name>@data.Route.Name()</span>
+                        <ol class="list-unstyled mb-0 mt-1" data-stops>
+                            @foreach (ScheduleRouteStop stop in data.Route.Stops)
+                            {
+                                <li data-stop>@stop.City.Name — @FleetDisplay.Duration(stop.OffsetMinutes)</li>
+                            }
+                        </ol>
+                    }
+                    else
+                    {
+                        <span data-route-name>@TripDisplay.UnknownRoute</span>
+                    }
+                </dd>
+                <dt class="col-sm-3">Bus</dt>
+                <dd class="col-sm-9" data-bus>
+                    @if (data.Bus != null)
+                    {
+                        <a href="@TripDisplay.BusAddress(data.Bus.BusId)">@data.Bus.Name</a>
+                    }
+                    else
+                    {
+                        @TripDisplay.UnknownBus
+                    }
+                </dd>
+                <dt class="col-sm-3">Departure time</dt>
+                <dd class="col-sm-9" data-departure-time>@TripDisplay.DepartureTime(schedule.DepartureTime)</dd>
+                <dt class="col-sm-3">Days</dt>
+                <dd class="col-sm-9" data-days>@TripDisplay.DaysText(schedule.DaysOfWeek)</dd>
+                <dt class="col-sm-3">Fares</dt>
+                <dd class="col-sm-9" data-fares>@TripDisplay.FaresText(schedule.ClassFares, data.Bus?.SeatClasses)</dd>
+                <dt class="col-sm-3">Status</dt>
+                <dd class="col-sm-9" data-status>@FleetDisplay.StatusLabel(schedule.Status)</dd>
+                <dt class="col-sm-3">Trips on sale until</dt>
+                <dd class="col-sm-9" data-on-sale-until>@IndiaTime.FormatDay(schedule.TripsGeneratedThrough)</dd>
+                <dt class="col-sm-3">Created at</dt>
+                <dd class="col-sm-9" data-created-at>@IndiaTime.Format(schedule.CreatedAt)</dd>
+                <dt class="col-sm-3">Updated at</dt>
+                <dd class="col-sm-9" data-updated-at>@IndiaTime.Format(schedule.UpdatedAt)</dd>
+            </dl>
+        </div>
+    </div>
+
+    @if (!Model.IsConfirming)
+    {
+        @if (schedule.IsActive)
+        {
+            <div class="d-flex flex-wrap gap-2 mb-4" data-schedule-actions>
+                <a class="btn btn-primary" href="@Model.EditAddress()" data-edit>Change schedule</a>
+                <a class="btn btn-outline-danger" href="@Model.ConfirmAddress()" data-stop-schedule>Stop schedule</a>
+                <a class="btn btn-outline-secondary" href="@Model.TripsAddress()" data-see-trips>See trips</a>
+            </div>
+
+            <div class="card mb-4" data-extend>
+                <div class="card-body">
+                    <h2 class="h5 mb-3">Put more trips on sale</h2>
+                    <form method="post" action="@Model.ExtendAddress()" asp-antiforgery="true" novalidate data-extend-form>
+                        <div class="mb-3">
+                            <label asp-for="Input.EndDate" class="form-label">Date</label>
+                            <input asp-for="Input.EndDate" type="date" class="form-control w-auto"
+                                   min="@Model.Today().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)"
+                                   max="@Model.LatestDate().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)" data-end-date />
+                            <div class="form-text" data-end-date-hint>You can put trips on sale up to 60 days ahead (until @IndiaTime.FormatDay(Model.LatestDate())).</div>
+                            <span asp-validation-for="Input.EndDate" class="invalid-feedback d-block" data-end-date-error></span>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Put trips on sale</button>
+                    </form>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="d-flex flex-wrap gap-2 mb-4" data-schedule-actions>
+                <form method="post" action="@Model.RestartAddress()" asp-antiforgery="true" novalidate data-restart-form>
+                    <button type="submit" class="btn btn-primary">Restart schedule</button>
+                </form>
+                <a class="btn btn-outline-secondary" href="@Model.TripsAddress()" data-see-trips>See trips</a>
+            </div>
+        }
+    }
+
+    <a href="@ScheduleModel.ScheduleListAddress" data-back>@ScheduleModel.BackToListText</a>
+}

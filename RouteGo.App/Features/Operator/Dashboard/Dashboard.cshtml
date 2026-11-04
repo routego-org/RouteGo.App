@@ -1,0 +1,25 @@
+@page
+@model RouteGo.App.Features.Operator.Dashboard.DashboardModel
+@*
+    The page opens on the last 7 days and today's trips; the address always carries from, to and day
+    (a bare address is sent on to the full one). Each section has its own form that asks the page
+    for that section alone (?handler=Sales / ?handler=Trips) when the script is on, so choosing one
+    never loads the other from Reporting. Without the script the same forms reload the whole page.
+*@
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<h1 class="page-title mb-3">Dashboard</h1>
+
+<div data-dashboard
+     data-page-address="@Model.PageAddress()"
+     data-sales-address="@Model.SectionAddress("Sales")"
+     data-trips-address="@Model.SectionAddress("Trips")">
+    <div data-sales-holder><partial name="_Sales" model="Model" /></div>
+    <div data-trips-holder><partial name="_Trips" model="Model" /></div>
+</div>
+
+@section Scripts {
+    <script cdn-src="~/js/dashboard.js"></script>
+}

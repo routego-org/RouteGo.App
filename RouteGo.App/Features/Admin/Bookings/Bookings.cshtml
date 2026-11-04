@@ -1,0 +1,109 @@
+@page
+@model RouteGo.App.Features.Admin.Bookings.BookingsModel
+@using RouteGo.App.Features.Admin.Bookings
+@*
+    Finds bookings in every status by booking ID, contact email or trip, newest first. The criteria
+    and the page live in the address, so a link or a reload shows the same list; the email is in the
+    address on purpose (admins only, as the email log does).
+*@
+@{
+    ViewData["Title"] = "Bookings";
+    BookingSearchView view = Model.View;
+}
+
+<h1 class="page-title mb-3">Bookings</h1>
+<p data-intro>Find a booking by its ID, by the contact's email address, or by trip.</p>
+
+<form method="get" action="/admin/bookings" class="row g-2 align-items-end mb-3 filter-bar" novalidate data-booking-search>
+    <div class="col-lg-4">
+        <label for="search-booking-id" class="form-label">Booking ID</label>
+        <input id="search-booking-id" name="bookingId" type="text" class="form-control" value="@Model.Criteria.BookingId" />
+        @if (view.BookingIdError != null)
+        {
+            <span class="invalid-feedback d-block" data-booking-id-error>@view.BookingIdError</span>
+        }
+    </div>
+    <div class="col-lg-3">
+        <label for="search-email" class="form-label">Contact email</label>
+        <input id="search-email" name="email" type="text" class="form-control" value="@Model.Criteria.Email" />
+        @if (view.EmailError != null)
+        {
+            <span class="invalid-feedback d-block" data-email-error>@view.EmailError</span>
+        }
+    </div>
+    <div class="col-lg-3">
+        <label for="search-trip-id" class="form-label">Trip ID</label>
+        <input id="search-trip-id" name="tripId" type="text" class="form-control" value="@Model.Criteria.TripId" />
+        @if (view.TripIdError != null)
+        {
+            <span class="invalid-feedback d-block" data-trip-id-error>@view.TripIdError</span>
+        }
+    </div>
+    <div class="col-lg-2">
+        <button type="submit" class="btn btn-primary w-100" data-search>Search</button>
+    </div>
+    @if (view.CriteriaError != null)
+    {
+        <div class="col-12">
+            <span class="invalid-feedback d-block" data-criteria-error>@view.CriteriaError</span>
+        </div>
+    }
+</form>
+
+<partial name="_PageAlert" model="view.Alert" />
+
+@if (view.Results != null)
+{
+    @if (view.Results.Items.Count == 0)
+    {
+        <p data-no-bookings>@Messages.EmptySearch("bookings")</p>
+    }
+    else
+    {
+        <p class="lead" data-bookings-count>@BookingsHandler.CountText(view.Results.TotalItems)</p>
+        <div class="table-responsive">
+            <table class="table align-middle" data-bookings>
+                <thead>
+                    <tr>
+                        <th scope="col">Booking ID</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Contact name</th>
+                        <th scope="col">Contact email</th>
+                        <th scope="col">Trip</th>
+                        <th scope="col">Seat numbers</th>
+                        <th scope="col">Total</th>
+                        <th scope="col">Booked at</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (AdminBookingSummary booking in view.Results.Items)
+                    {
+                        <tr data-booking="@booking.BookingId">
+                            <td><a href="@Model.BookingAddress(booking)" data-open-booking>@booking.BookingId</a></td>
+                            <td data-status>@BookingDisplay.StatusLabel(booking.Status)</td>
+                            <td>@booking.ContactName</td>
+                            <td>@booking.ContactEmail</td>
+                            <td data-trip>@BookingDisplay.RouteName(booking.Trip), @IndiaTime.Format(booking.Trip.DepartureAt)</td>
+                            <td data-seats>@SeatDisplay.SeatList(booking.SeatNos)</td>
+                            <td data-total>@TripDisplay.Rupees(booking.TotalAmount)</td>
+                            <td data-booked-at>@IndiaTime.Format(booking.CreatedAt)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (BookingsHandler.PageCount(view.Results.TotalItems) > 1)
+        {
+            <nav data-bookings-pages aria-label="Pages">
+                <ul class="pagination">
+                    @for (int pageNumber = 1; pageNumber <= BookingsHandler.PageCount(view.Results.TotalItems); pageNumber++)
+                    {
+                        <li class="page-item @(pageNumber == Model.PageNumber ? "active" : "")">
+                            <a class="page-link" href="@Model.PageAddress(pageNumber)">@pageNumber</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    }
+}

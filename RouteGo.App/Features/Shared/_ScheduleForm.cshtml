@@ -1,0 +1,109 @@
+@model RouteGo.App.Common.UI.ScheduleFormView
+@using Microsoft.AspNetCore.Mvc.ModelBinding
+@*
+    The schedule form shared by "Add a schedule" and "Change {schedule}". It works without
+    JavaScript: "Show fares for this bus" posts the whole form and the page is drawn again with one
+    fare box per seat class of the chosen bus, keeping everything typed.
+*@
+@{
+    ScheduleFormInput input = Model.Input;
+    IReadOnlyList<ModelError> busErrors = ViewContext.ModelState["Input.BusId"]?.Errors ?? (IReadOnlyList<ModelError>)Array.Empty<ModelError>();
+}
+
+<form method="post" action="@Model.SaveAddress" asp-antiforgery="true" novalidate data-schedule-form>
+    @* Pressing Enter in a box submits the form's first button; this keeps that "Save schedule", not "Show fares for this bus". *@
+    <button type="submit" class="visually-hidden" tabindex="-1" aria-hidden="true">Save schedule</button>
+
+    <div class="mb-3">
+        <label asp-for="Input.RouteId" class="form-label">Route</label>
+        <select asp-for="Input.RouteId" class="form-select" data-route>
+            <option value=""></option>
+            @foreach (ScheduleFormChoice route in Model.Routes)
+            {
+                <option value="@route.Id" selected="@(input.RouteId == route.Id)">@route.Label()</option>
+            }
+        </select>
+        <span asp-validation-for="Input.RouteId" class="invalid-feedback d-block" data-route-error></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Input.BusId" class="form-label">Bus</label>
+        <div class="d-flex flex-wrap gap-2">
+            <select asp-for="Input.BusId" class="form-select w-auto flex-grow-1" data-bus>
+                <option value=""></option>
+                @foreach (ScheduleFormChoice bus in Model.Buses)
+                {
+                    <option value="@bus.Id" selected="@(input.BusId == bus.Id)">@bus.Label()</option>
+                }
+            </select>
+            <button type="submit" class="btn btn-outline-primary" formaction="@Model.ShowFaresAddress" data-show-fares>Show fares for this bus</button>
+        </div>
+        @foreach (ModelError error in busErrors)
+        {
+            <span class="invalid-feedback d-block" data-bus-error>
+                @error.ErrorMessage
+                @if (error.ErrorMessage == Messages.ProblemBusInactive && input.BusId != null)
+                {
+                    <a href="@TripDisplay.BusAddress(input.BusId.Value)" data-open-bus>@TripDisplay.OpenBusText</a>
+                }
+            </span>
+        }
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Input.DepartureTime" class="form-label">Departure time</label>
+        <input asp-for="Input.DepartureTime" class="form-control w-auto" inputmode="numeric" autocomplete="off" data-departure-time />
+        <span asp-validation-for="Input.DepartureTime" class="invalid-feedback d-block" data-departure-time-error></span>
+    </div>
+
+    <fieldset class="mb-3" data-days>
+        <legend class="form-label fs-6">Days</legend>
+        @foreach (string day in TripDisplay.WeekDays)
+        {
+            string dayId = "day-" + day;
+            <div class="form-check form-check-inline">
+                <input type="checkbox" class="form-check-input" id="@dayId" name="Input.Days" value="@day" checked="@input.Days.Contains(day)" />
+                <label class="form-check-label" for="@dayId">@Messages.DayLabel(day)</label>
+            </div>
+        }
+        <span asp-validation-for="Input.Days" class="invalid-feedback d-block" data-days-error></span>
+    </fieldset>
+
+    <fieldset class="mb-4" data-fares>
+        <legend class="form-label fs-6">Fares</legend>
+        @if (input.Fares.Count == 0)
+        {
+            <p class="text-muted mb-0" data-fares-hint>Choose a bus to enter its fares.</p>
+        }
+        @for (int index = 0; index < input.Fares.Count; index++)
+        {
+            string fareId = $"fare-{index}";
+            <div class="mb-2" data-fare>
+                <input type="hidden" asp-for="Input.Fares[index].SeatClass" />
+                <label for="@fareId" class="form-label small" data-fare-label>@input.Fares[index].SeatClass (₹)</label>
+                <input asp-for="Input.Fares[index].Fare" id="@fareId" class="form-control w-auto" inputmode="numeric" autocomplete="off" data-fare-box />
+                <span asp-validation-for="Input.Fares[index].Fare" class="invalid-feedback d-block" data-fare-error></span>
+            </div>
+        }
+        @if (Model.IsChange)
+        {
+            <p class="form-text mb-0" data-fare-cutoff>Trips leaving in less than 6 hours keep their old fares.</p>
+        }
+    </fieldset>
+
+    @if (Model.GoBackAddress != null)
+    {
+        <div class="card border-danger mb-3" data-confirm>
+            <div class="card-body">
+                <p data-confirm-question>@Messages.ConfirmTripsWillBeCancelled</p>
+                <button type="submit" class="btn btn-danger" name="Confirmed" value="true" data-confirm-save>Save and change trips</button>
+                <button type="submit" class="btn btn-link" formaction="@Model.GoBackAddress" data-go-back>Go back</button>
+            </div>
+        </div>
+    }
+    else
+    {
+        <button type="submit" class="btn btn-primary" data-save>Save schedule</button>
+        <a class="btn btn-link" href="@Model.CancelAddress" data-cancel>Cancel</a>
+    }
+</form>

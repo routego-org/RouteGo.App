@@ -1,0 +1,66 @@
+@page "/operator/trips/{tripId}/seats"
+@model RouteGo.App.Features.Operator.SeatBlocking.SeatBlockingModel
+@using RouteGo.App.Features.Operator.SeatBlocking
+@*
+    The address is fixed by the product (/operator/trips/{tripId}/seats, linked from "Seats" on My
+    trips). The trip is not constrained to an identifier: an address that names no trip still shows
+    the "not available" message. Seats are picked with tick boxes in one form, so blocking and
+    unblocking work without a page script; unblocking asks first, inside the same form.
+*@
+@{
+    ViewData["Title"] = Model.Seats is null ? "Seats" : Model.Heading();
+}
+
+@if (Model.Seats != null)
+{
+    <h1 class="page-title" data-heading>@Model.Heading()</h1>
+}
+
+<partial name="_PageAlert" model="Model.Alert" />
+
+@if (Model.Seats != null)
+{
+    string? notice = SeatDisplay.Notice(Model.Seats.IsCancelled, Model.Seats.IsDeparted);
+    @if (notice != null)
+    {
+        <div class="alert alert-warning" role="status" data-notice>
+            @notice
+            <span data-no-changes>Seats can no longer be blocked or unblocked.</span>
+        </div>
+    }
+
+    <p class="lead" data-counts>@Model.CountsText()</p>
+
+    <form method="post" action="@Model.PostAddress("Block")" asp-antiforgery="true" novalidate data-seat-form>
+        @if (Model.UnblockSeatNos != null)
+        {
+            <div class="card border-warning mb-4" data-unblock-question>
+                <div class="card-body">
+                    <p data-question>@Model.UnblockQuestion()</p>
+                    @foreach (string seatNo in Model.UnblockSeatNos)
+                    {
+                        <input type="hidden" name="ConfirmSeatNos" value="@seatNo" />
+                    }
+                    <input type="hidden" name="Confirmed" value="true" />
+                    <button type="submit" class="btn btn-danger" formaction="@Model.PostAddress("Unblock")" data-confirm-unblock>Unblock seats</button>
+                    <button type="submit" class="btn btn-link" formaction="@Model.PostAddress("Back")" data-go-back>Go back</button>
+                </div>
+            </div>
+        }
+
+        <partial name="_SeatGrid" model="Model.Grid()" />
+
+        @if (Model.CanAct() && Model.UnblockSeatNos is null)
+        {
+            <div class="d-flex flex-wrap gap-2 mb-4" data-seat-actions>
+                <button type="submit" class="btn btn-primary" formaction="@Model.PostAddress("Block")" data-block>Block seats</button>
+                <button type="submit" class="btn btn-outline-primary" formaction="@Model.PostAddress("Unblock")" data-unblock>Unblock seats</button>
+            </div>
+        }
+    </form>
+
+    <div class="d-flex flex-wrap gap-3" data-seat-links>
+        <a href="@Model.PublicSeatMapAddress()" data-public-seat-map>@Messages.LinkPublicSeatMap</a>
+        <a href="@SeatBlockingModel.MyTripsAddress" data-back-to-trips>@SeatBlockingModel.BackToMyTrips</a>
+    </div>
+}

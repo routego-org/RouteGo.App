@@ -1,0 +1,161 @@
+@page "/operator/buses/{busId:guid}"
+@model RouteGo.App.Features.Operator.Bus.BusModel
+@using RouteGo.App.Features.Operator.Bus
+@*
+    The bus's address is fixed by the product (/operator/buses/{busId}, linked from the bus list
+    and the schedule pages), so the page declares it instead of /operator/bus.
+*@
+@{
+    BusDetails? bus = Model.Bus;
+    ViewData["Title"] = bus is null ? "Bus" : bus.Name;
+}
+
+@if (bus != null)
+{
+    <h1 class="page-title" data-bus-name>@bus.Name</h1>
+}
+
+<partial name="_PageAlert" model="Model.Alert" />
+
+@if (bus != null)
+{
+    @if (Model.IsConfirming)
+    {
+        <div class="card border-danger mb-4" data-confirm>
+            <div class="card-body">
+                <p data-confirm-question>Deactivate @bus.Name? You will not be able to put it on a schedule until you activate it again. Customers can still see its page.</p>
+                <form method="post" action="@Model.DeactivateAddress()" asp-antiforgery="true" novalidate data-confirm-form>
+                    <button type="submit" class="btn btn-danger">Deactivate bus</button>
+                    <a class="btn btn-link" href="@Model.BusAddress()" data-cancel>Cancel</a>
+                </form>
+            </div>
+        </div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <dl class="row mb-0" data-bus-fields>
+                <dt class="col-sm-3">Bus name</dt>
+                <dd class="col-sm-9" data-field="name">@bus.Name</dd>
+                <dt class="col-sm-3">Registration number</dt>
+                <dd class="col-sm-9" data-field="registration-number">@bus.RegistrationNumber</dd>
+                <dt class="col-sm-3">Bus type</dt>
+                <dd class="col-sm-9" data-field="bus-type">@Messages.BusTypeLabel(bus.BusType)</dd>
+                <dt class="col-sm-3">AC</dt>
+                <dd class="col-sm-9" data-field="ac">@Messages.YesNo(bus.IsAc)</dd>
+                <dt class="col-sm-3">Amenities</dt>
+                <dd class="col-sm-9" data-field="amenities">
+                    @if (bus.Amenities.Count == 0)
+                    {
+                        @:None
+                    }
+                    else
+                    {
+                        @string.Join(", ", bus.Amenities.Select(Messages.AmenityLabel))
+                    }
+                </dd>
+                <dt class="col-sm-3">Seat classes</dt>
+                <dd class="col-sm-9" data-field="seat-classes">@string.Join(", ", bus.SeatClasses)</dd>
+                <dt class="col-sm-3">Seats</dt>
+                <dd class="col-sm-9" data-field="seats">@bus.TotalSeats</dd>
+                <dt class="col-sm-3">Status</dt>
+                <dd class="col-sm-9" data-field="status">@FleetDisplay.StatusLabel(bus.Status)</dd>
+                <dt class="col-sm-3">Created at</dt>
+                <dd class="col-sm-9" data-field="created-at">@IndiaTime.Format(bus.CreatedAt)</dd>
+                <dt class="col-sm-3">Updated at</dt>
+                <dd class="col-sm-9" data-field="updated-at">@IndiaTime.Format(bus.UpdatedAt)</dd>
+            </dl>
+        </div>
+    </div>
+
+    <section class="card mb-4" data-photo-section>
+        <div class="card-body">
+            <h2 class="h5">Photos</h2>
+            @if (bus.Photos.Count == 0)
+            {
+                <p class="text-muted" data-no-photos>No photos yet. Customers trust a bus more when they can see it.</p>
+            }
+            else
+            {
+                <p data-photo-count>@bus.Photos.Count of 5 photos</p>
+                <div class="d-flex flex-wrap gap-2 mb-3" data-photos>
+                    @for (int index = 0; index < bus.Photos.Count; index++)
+                    {
+                        string? address = FleetDisplay.SafePhotoAddress(bus.Photos[index].Url);
+                        <figure class="mb-0" data-photo="@bus.Photos[index].PhotoId">
+                            @if (address != null)
+                            {
+                                <img class="bus-photo" src="@address" alt="@bus.Name" />
+                            }
+                            @if (index == 0)
+                            {
+                                <figcaption><span class="badge text-bg-primary" data-cover>Cover photo</span></figcaption>
+                            }
+                        </figure>
+                    }
+                </div>
+            }
+            <a href="@Model.PhotosAddress()" data-manage-photos>Manage photos</a>
+        </div>
+    </section>
+
+    @foreach (SeatGridDeck deck in Model.SeatGrid)
+    {
+        string deckName = Messages.DeckLabel(deck.Deck);
+        <section class="card mb-4" data-deck="@deck.Deck">
+            <div class="card-body">
+                <h2 class="h5" data-deck-name>@deckName</h2>
+                <div class="table-responsive">
+                    <table class="seat-grid" aria-label="@deckName">
+                        <tbody>
+                            @foreach (SeatGridRow row in deck.Rows)
+                            {
+                                <tr data-seat-row>
+                                    @for (int index = 0; index < row.Places.Count; index++)
+                                    {
+                                        BusSeat? seat = row.Places[index];
+                                        @if (seat is null)
+                                        {
+                                            <td class="seat-empty" data-place-empty></td>
+                                        }
+                                        else
+                                        {
+                                            <td class="seat" data-seat="@seat.Label">
+                                                <span class="seat-number">@seat.Label</span>
+                                                <span class="seat-class">@seat.SeatClass</span>
+                                            </td>
+                                        }
+                                        @if (deck.AisleAfterColumn == index + 1)
+                                        {
+                                            <td class="seat-aisle" aria-hidden="true" data-aisle></td>
+                                        }
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    }
+
+    @if (!Model.IsConfirming)
+    {
+        <div class="d-flex flex-wrap gap-2 mb-4" data-bus-actions>
+            <a class="btn btn-primary" href="@Model.EditAddress()" data-edit>Edit bus</a>
+            @if (bus.IsActive)
+            {
+                <a class="btn btn-outline-danger" href="@Model.ConfirmAddress()" data-deactivate>Deactivate bus</a>
+            }
+            else
+            {
+                <form method="post" action="@Model.ActivateAddress()" asp-antiforgery="true" novalidate data-activate-form>
+                    <button type="submit" class="btn btn-outline-primary">Activate bus</button>
+                </form>
+            }
+            <a class="btn btn-outline-secondary" href="@Model.PublicAddress()" data-public>See what customers see</a>
+        </div>
+    }
+
+    <a href="@BusModel.BusListAddress" data-back>@BusModel.BackToListText</a>
+}

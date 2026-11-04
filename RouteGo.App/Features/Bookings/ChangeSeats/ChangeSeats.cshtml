@@ -1,0 +1,61 @@
+@page "/my-bookings/{bookingId}/change-seats"
+@model RouteGo.App.Features.Bookings.ChangeSeats.ChangeSeatsModel
+@using RouteGo.App.Features.Bookings.ChangeSeats
+@*
+    The address is fixed by the product (/my-bookings/{bookingId}/change-seats, linked from the booking
+    page). Each of the booking's seats has a choice of free seats of its own class; a seat left on
+    "Keep this seat" stays where it is. A seat picked for one seat is left out of the other choices
+    when the page is drawn again, and wwwroot/js/change-seats.js does the same while the person picks.
+*@
+@{
+    ViewData["Title"] = Model.ChangedMoves != null ? "Seats changed" : Model.Heading();
+}
+
+@if (Model.ChangedMoves != null)
+{
+    <h1 class="page-title" data-heading>Seats changed</h1>
+    <p class="lead" data-success>@Model.SuccessText()</p>
+    <div class="d-flex flex-wrap gap-3">
+        <a href="@Model.BookingAddress()" data-view-booking>@BookingDisplay.LinkViewBooking</a>
+        <a href="@Model.TicketAddress()" data-view-ticket>@BookingDisplay.LinkViewTicket</a>
+    </div>
+}
+else
+{
+    <h1 class="page-title" data-heading>@Model.Heading()</h1>
+
+    <partial name="_PageAlert" model="Model.Alert" />
+
+    @if (Model.View != null && Model.View.Choices.Count > 0 && Model.View.Booking != null)
+    {
+        <p data-no-money>Passengers move with their seats. Fares stay the same. No money is charged or refunded.</p>
+        <p class="small text-muted" data-seat-changes>Seat changes: @Model.View.Booking.SeatChangeCount of @BookingDisplay.MaxSeatChanges used</p>
+        <form method="post" action="@Model.ChangeAddress()" asp-antiforgery="true" novalidate data-change-form>
+            <div class="d-grid gap-3 mb-3">
+                @foreach (SeatChoice choice in Model.View.Choices)
+                {
+                    string field = "Moves[" + choice.Seat.SeatNo + "]";
+                    <div class="card" data-seat-choice="@choice.Seat.SeatNo">
+                        <div class="card-body">
+                            <p class="mb-1"><span class="fw-semibold" data-seat-no>@choice.Seat.SeatNo</span> · <span data-seat-class>@choice.Seat.SeatClass</span> · <span data-passenger>@choice.Seat.PassengerName</span></p>
+                            <label class="form-label" for="move-@choice.Seat.SeatNo">New seat</label>
+                            <select class="form-select" id="move-@choice.Seat.SeatNo" name="@field" data-new-seat>
+                                <option value="" selected="@(choice.Chosen.Length == 0)">Keep this seat</option>
+                                @foreach (string candidate in choice.Candidates)
+                                {
+                                    <option value="@candidate" selected="@(candidate == choice.Chosen)">@candidate</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                }
+            </div>
+            <button type="submit" class="btn btn-primary" data-change>Change seats</button>
+            <a class="btn btn-link" href="@Model.BookingAddress()" data-view-booking>@BookingDisplay.LinkViewBooking</a>
+        </form>
+    }
+}
+
+@section Scripts {
+    <script cdn-src="~/js/change-seats.js"></script>
+}

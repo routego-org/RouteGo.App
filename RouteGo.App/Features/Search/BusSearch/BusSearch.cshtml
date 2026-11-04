@@ -1,0 +1,112 @@
+@page "/bus-search"
+@model RouteGo.App.Features.Search.BusSearch.BusSearchModel
+@using RouteGo.App.Features.Search.BusSearch
+@*
+    The address is fixed by the product (/bus-search, never /search — Search's own operations may be
+    published under /search/), and the home page's form and shared links lead here, so the page
+    declares it instead of /search/bus-search.
+*@
+@{
+    ViewData["Title"] = Model.Heading();
+}
+
+<h1 class="page-title" data-heading>@Model.Heading()</h1>
+
+<partial name="_SearchForm" model="Model.Form()" />
+
+<partial name="_PageAlert" model="Model.Alert" />
+
+@if (Model.Empty != null)
+{
+    <div class="results-empty" role="status" data-results-empty>
+        <span data-results-empty-text>@Model.Empty.Text</span>
+        @foreach (PageAlert.Link link in Model.Empty.Links)
+        {
+            <a class="ms-1" href="@link.Href" data-results-empty-link>@link.Text</a>
+        }
+    </div>
+}
+
+@if (Model.Results != null && Model.Results.Items.Count > 0)
+{
+    <p class="small text-muted mt-3" data-showing>@Model.ShowingText()</p>
+    <div class="listing-list" data-results>
+        @foreach (TripListing trip in Model.Results.Items)
+        {
+            <article class="listing-card @(trip.IsSoldOut ? "listing-sold-out" : "")" data-trip="@trip.TripId">
+                <div class="listing-bus">
+                    <a class="listing-bus-name" href="@ListingDisplay.BusAddress(trip)" data-bus-link>@trip.BusName</a>
+                    <div class="listing-company"><span class="listing-label">Bus company</span> <span data-company>@trip.OperatorName</span></div>
+                    <span class="listing-rating" data-rating>@ListingDisplay.Rating(trip.OperatorRating)</span>
+                    <div class="listing-tags">
+                        <span class="listing-tag" data-bus-type>@Messages.BusTypeLabel(trip.BusType)</span>
+                        <span class="listing-tag"><span class="listing-label">AC</span> <span data-ac>@Messages.YesNo(trip.IsAc)</span></span>
+                    </div>
+                    <div class="listing-amenities">
+                        <span class="listing-label">Amenities</span>
+                        @if (trip.Amenities.Count == 0)
+                        {
+                            <span data-amenities-none>None</span>
+                        }
+                        @foreach (string amenity in trip.Amenities)
+                        {
+                            <span class="listing-amenity" data-amenity>@Messages.AmenityLabel(amenity)</span>
+                        }
+                    </div>
+                </div>
+                <div class="listing-times">
+                    <div class="listing-time">
+                        <span class="listing-label">Departs</span>
+                        <strong data-departs>@ListingDisplay.Departs(trip)</strong>
+                    </div>
+                    <div class="listing-journey">
+                        <span class="listing-label">Journey time</span>
+                        <span data-journey>@ListingDisplay.JourneyTime(trip.DurationMinutes)</span>
+                    </div>
+                    <div class="listing-time">
+                        <span class="listing-label">Arrives</span>
+                        <strong data-arrives>@ListingDisplay.Arrives(trip)</strong>
+                    </div>
+                    @if (trip.Stops.Count > 0)
+                    {
+                        <ul class="listing-stops" data-stops>
+                            @foreach (ListingStop stop in trip.Stops)
+                            {
+                                <li data-stop>@ListingDisplay.Via(stop)</li>
+                            }
+                        </ul>
+                    }
+                </div>
+                <div class="listing-price">
+                    <span class="listing-fare" data-price>@ListingDisplay.Price(trip)</span>
+                    @if (trip.IsSoldOut)
+                    {
+                        <span class="badge text-bg-secondary" data-sold-out>@ListingDisplay.SeatsLeft(trip)</span>
+                    }
+                    else
+                    {
+                        <span class="listing-seats" data-seats-left>@ListingDisplay.SeatsLeft(trip)</span>
+                    }
+                    <a class="btn btn-accent btn-sm rounded-pill px-3" href="@ListingDisplay.SeatsAddress(trip)" data-see-seats>See seats</a>
+                </div>
+            </article>
+        }
+    </div>
+    @if (Model.PageCount() > 1)
+    {
+        <nav class="mt-3" aria-label="Pages" data-results-pages>
+            <ul class="pagination">
+                @for (int pageNumber = 1; pageNumber <= Model.PageCount(); pageNumber++)
+                {
+                    <li class="page-item @(pageNumber == Model.Results.Page ? "active" : "")">
+                        <a class="page-link" href="@Model.PageAddress(pageNumber)">@pageNumber</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+}
+
+@section Scripts {
+    <script cdn-src="~/js/bus-search.js"></script>
+}

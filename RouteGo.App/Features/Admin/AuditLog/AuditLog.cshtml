@@ -1,0 +1,128 @@
+@page
+@model RouteGo.App.Features.Admin.AuditLog.AuditLogModel
+@using RouteGo.App.Features.Admin.AuditLog
+@*
+    Two lookups, never both: "An item" and "A day" are two forms, each sending only its own boxes, so
+    the address is exactly kind and id, or day. Without a lookup in the address the page only shows
+    the forms. The log is read only: nothing on this page adds, changes or removes a record.
+*@
+@{
+    ViewData["Title"] = "Audit log";
+    AuditView view = Model.View;
+}
+
+<h1 class="page-title mb-3">Audit log</h1>
+<p data-intro>Look up what was done to one item, or everything done on one day. @AuditLogHandler.ReadOnlyNote</p>
+
+<div class="row g-3 mb-4">
+    <form method="get" action="/admin/audit-log" class="col-lg-7 row g-2 align-items-end filter-bar" novalidate data-item-form>
+        <h2 class="h6 col-12 mb-0">An item</h2>
+        <div class="col-sm-4">
+            <label for="audit-kind" class="form-label">Kind</label>
+            <select id="audit-kind" name="kind" class="form-select">
+                @foreach (string kind in AuditLogHandler.Kinds)
+                {
+                    <option value="@kind" selected="@(kind == Model.Kind)">@kind</option>
+                }
+            </select>
+            @if (view.KindError != null)
+            {
+                <span class="invalid-feedback d-block" data-kind-error>@view.KindError</span>
+            }
+        </div>
+        <div class="col-sm-5">
+            <label for="audit-id" class="form-label">Item ID</label>
+            <input id="audit-id" name="id" type="text" class="form-control" value="@Model.ItemId" />
+            @if (view.IdError != null)
+            {
+                <span class="invalid-feedback d-block" data-id-error>@view.IdError</span>
+            }
+        </div>
+        <div class="col-sm-3">
+            <button type="submit" class="btn btn-primary w-100" data-show-item>Show records</button>
+        </div>
+    </form>
+
+    <form method="get" action="/admin/audit-log" class="col-lg-5 row g-2 align-items-end filter-bar" novalidate data-day-form>
+        <h2 class="h6 col-12 mb-0">A day</h2>
+        <div class="col-sm-7">
+            <label for="audit-day" class="form-label">Day</label>
+            <input id="audit-day" name="day" type="date" class="form-control" value="@Model.DayText" />
+            @if (view.DayError != null)
+            {
+                <span class="invalid-feedback d-block" data-day-error>@view.DayError</span>
+            }
+        </div>
+        <div class="col-sm-5">
+            <button type="submit" class="btn btn-primary w-100" data-show-day>Show records</button>
+        </div>
+    </form>
+</div>
+
+<partial name="_PageAlert" model="view.Alert" />
+
+@if (view.Records != null)
+{
+    @if (view.Records.Items.Count == 0)
+    {
+        <p data-no-records>@AuditLogHandler.NoRecords</p>
+    }
+    else
+    {
+        <p class="lead" data-records-count>@AuditLogHandler.CountText(view.Records.TotalCount)</p>
+        <div class="table-responsive">
+            <table class="table align-middle" data-records>
+                <thead>
+                    <tr>
+                        <th scope="col">When</th>
+                        <th scope="col">Who</th>
+                        <th scope="col">Action</th>
+                        <th scope="col">Item</th>
+                        <th scope="col">Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (AuditRecord record in view.Records.Items)
+                    {
+                        string? itemAddress = AuditLogHandler.ItemAddress(record);
+                        <tr data-record>
+                            <td data-when>@IndiaTime.Format(record.OccurredAt)</td>
+                            <td data-who>@AuditLogHandler.ActorText(record)</td>
+                            <td data-action>@record.Action</td>
+                            <td data-item>
+                                @record.EntityType
+                                @if (itemAddress is null)
+                                {
+                                    <span>@record.EntityId</span>
+                                }
+                                else
+                                {
+                                    <a href="@itemAddress">@record.EntityId</a>
+                                }
+                            </td>
+                            <td data-details>
+                                @foreach (string line in AuditLogHandler.DetailLines(record))
+                                {
+                                    <div data-detail>@line</div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (AuditLogHandler.PageCount(view.Records.TotalCount) > 1)
+        {
+            <nav data-record-pages>
+                <ul class="pagination">
+                    @for (int pageNumber = 1; pageNumber <= AuditLogHandler.PageCount(view.Records.TotalCount); pageNumber++)
+                    {
+                        <li class="page-item @(pageNumber == Model.PageNumber ? "active" : "")">
+                            <a class="page-link" href="@Model.PageAddress(pageNumber)">@pageNumber</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    }
+}

@@ -1,0 +1,76 @@
+@page "/my-bookings/{bookingId}/cancel"
+@model RouteGo.App.Features.Bookings.CancelBooking.CancelBookingModel
+@using RouteGo.App.Features.Bookings.CancelBooking
+@*
+    The address is fixed by the product (/my-bookings/{bookingId}/cancel, linked from the booking
+    page). The page itself is the confirmation: "Cancel booking" cancels, "Keep booking" sends nothing.
+    The refund share shown is posted back so the page can say when the refund came out lower.
+*@
+@{
+    ViewData["Title"] = Model.Done != null ? "Booking cancelled" : Model.Heading();
+}
+
+@if (Model.Done != null)
+{
+    CancelledSummary done = Model.Done;
+    <h1 class="page-title" data-heading>Your booking is cancelled.</h1>
+    @if (done.RefundAmount == 0)
+    {
+        <p data-no-refund>@BookingDisplay.NoRefundDue</p>
+    }
+    else
+    {
+        <p class="lead" data-refund>Refund: @done.RefundPercent% — @TripDisplay.Rupees(done.RefundAmount)</p>
+        @if (done.RefundStatus != null)
+        {
+            <p data-refund-status>@BookingDisplay.RefundStatusLabel(done.RefundStatus)</p>
+        }
+
+        @if (done.RefundStatus == "requested")
+        {
+            <p data-refund-email>We will email you when your refund is completed.</p>
+        }
+    }
+
+    @if (CancelBookingHandler.IsLowerThanShown(done))
+    {
+        <p data-lower-refund>The refund is @done.RefundPercent%, not @done.ShownPercent%, because the trip is closer now.</p>
+    }
+
+    <div class="d-flex flex-wrap gap-3">
+        <a href="@Model.BookingAddress()" data-view-booking>@BookingDisplay.LinkViewBooking</a>
+        <a href="@BookingDisplay.MyBookingsAddress" data-my-bookings>@BookingDisplay.LinkMyBookings</a>
+    </div>
+}
+else
+{
+    <h1 class="page-title" data-heading>@Model.Heading()</h1>
+
+    <partial name="_PageAlert" model="Model.Alert" />
+
+    @if (Model.View != null && Model.View.Preview != null && Model.View.Booking != null)
+    {
+        CancellationPreview preview = Model.View.Preview;
+        <div class="card mb-4" data-preview>
+            <div class="card-body">
+                <p data-paid>You paid @TripDisplay.Rupees(preview.TotalAmount).</p>
+                @if (preview.RefundPercent == 0)
+                {
+                    <p class="lead" data-refund-offer>If you cancel now you get no refund.</p>
+                }
+                else
+                {
+                    <p class="lead" data-refund-offer>If you cancel now you get @preview.RefundPercent% back: @TripDisplay.Rupees(preview.RefundAmount) of @TripDisplay.Rupees(preview.TotalAmount).</p>
+                }
+
+                <p data-worked-out>This was worked out at @IndiaTime.Format(preview.CalculatedAt). It is worked out again when you confirm, so it can be lower if the trip is closer by then.</p>
+                <p data-frees>Cancelling frees all @Model.View.Booking.Seats.Count seats of this booking. This cannot be undone.</p>
+                <form method="post" action="@Model.BookingAddress()/cancel?handler=Cancel" asp-antiforgery="true" novalidate>
+                    <input type="hidden" name="PreviewPercent" value="@preview.RefundPercent" />
+                    <button type="submit" class="btn btn-danger" data-cancel>Cancel booking</button>
+                    <a class="btn btn-link" href="@Model.BookingAddress()" data-keep-booking>Keep booking</a>
+                </form>
+            </div>
+        </div>
+    }
+}

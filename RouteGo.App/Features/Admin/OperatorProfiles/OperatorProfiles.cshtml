@@ -1,0 +1,75 @@
+@page
+@model RouteGo.App.Features.Admin.OperatorProfiles.OperatorProfilesModel
+@using RouteGo.App.Features.Admin.OperatorProfiles
+@{ ViewData["Title"] = "Operators"; }
+
+<h1 class="page-title mb-3">Operators</h1>
+
+<form method="get" action="/admin/operator-profiles" class="row g-2 align-items-end mb-4 filter-bar" novalidate data-operator-profiles-search>
+    <div class="col-sm-6">
+        <label for="search-company-name" class="form-label">Company name</label>
+        <input id="search-company-name" name="companyName" type="search" class="form-control" value="@Model.Query.CompanyName" aria-describedby="search-company-name-error" />
+        <span asp-validation-for="Query.CompanyName" id="search-company-name-error" class="invalid-feedback d-block" data-company-name-error></span>
+    </div>
+    <div class="col-sm-2">
+        <button type="submit" class="btn btn-primary w-100">Search</button>
+    </div>
+</form>
+
+<partial name="_PageAlert" model="Model.Alert" />
+
+@if (Model.Profiles != null)
+{
+    OperatorProfilesPage profiles = Model.Profiles;
+    if (profiles.Items.Count == 0)
+    {
+        <p data-operator-profiles-empty>@(Model.Query.HasSearch() ? Messages.EmptySearch(OperatorProfilesModel.Items) : Messages.EmptyCollection(OperatorProfilesModel.AllItems))</p>
+    }
+    else
+    {
+        <p class="small text-muted" data-operator-profiles-showing>@FleetDisplay.ShowingText(profiles.Page, profiles.Items.Count, profiles.TotalCount, OperatorProfilesModel.Items)</p>
+        <div class="table-responsive">
+            <table class="table align-middle" data-operator-profiles>
+                <thead>
+                    <tr>
+                        <th scope="col">Company name</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Rating</th>
+                        <th scope="col">Approved at</th>
+                        <th scope="col">Operator ID</th>
+                        <th scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (OperatorProfile profile in profiles.Items)
+                    {
+                        <tr data-operator-profile="@profile.OperatorId">
+                            <td>@profile.CompanyName</td>
+                            <td>@profile.Email</td>
+                            <td>@OperatorProfilesModel.RatingText(profile.Rating)</td>
+                            <td class="small">@IndiaTime.Format(profile.ApprovedAt)</td>
+                            <td class="small text-muted">@profile.OperatorId</td>
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-primary" href="@OperatorProfilesModel.TripsAddress(profile)" data-see-trips>See trips</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (FleetDisplay.PageCount(profiles.TotalCount) > 1)
+        {
+            <nav data-operator-profiles-pages>
+                <ul class="pagination">
+                    @for (int pageNumber = 1; pageNumber <= FleetDisplay.PageCount(profiles.TotalCount); pageNumber++)
+                    {
+                        <li class="page-item @(pageNumber == profiles.Page ? "active" : "")">
+                            <a class="page-link" href="@Model.ListAddress(pageNumber)">@pageNumber</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    }
+    <p class="small text-muted" data-just-approved>A company you just approved can take a minute to appear here.</p>
+}

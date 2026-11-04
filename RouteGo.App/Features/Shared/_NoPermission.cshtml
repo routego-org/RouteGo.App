@@ -1,0 +1,11 @@
+@*
+    Shown by PageAccessFilter in place of a page the person's role may not open. The address does
+    not change and the page itself never runs, so nothing from it is shown or called.
+*@
+@{
+    ViewData["Title"] = Messages.AccessNoPermission;
+}
+<div class="alert alert-warning" role="alert" data-no-permission>
+    <p class="mb-2">@Messages.AccessNoPermission</p>
+    <a class="alert-link" href="/">@Messages.AccessGoHome</a>
+</div>

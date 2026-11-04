@@ -1,0 +1,30 @@
+@page "/operator/schedules/new"
+@model RouteGo.App.Features.Operator.NewSchedule.NewScheduleModel
+@using RouteGo.App.Features.Operator.NewSchedule
+@*
+    The address is fixed by the product (/operator/schedules/new, linked from the schedule list and
+    route pages), so the page declares it instead of /operator/new-schedule.
+*@
+@{ ViewData["Title"] = "Add a schedule"; }
+
+<div class="row justify-content-center">
+    <div class="col-lg-10 col-xl-8"><div class="form-card">
+        <h1 class="mb-3">Add a schedule</h1>
+
+        <partial name="_PageAlert" model="Model.Alert" />
+
+        @if (Model.HasNothingToSchedule)
+        {
+            <div data-nothing-to-schedule>
+                <p>To add a schedule you need at least one active route and one active bus.</p>
+                <a class="btn btn-outline-primary" href="@NewScheduleModel.NewRouteAddress" data-add-route>Add a route</a>
+                <a class="btn btn-outline-primary" href="@NewScheduleModel.NewBusAddress" data-add-bus>Add a bus</a>
+            </div>
+        }
+        else if (Model.Choices != null)
+        {
+            <p class="mb-4" data-on-sale-note>Trips for the next 14 days go on sale as soon as you save.</p>
+            <partial name="_ScheduleForm" model="Model.View()" />
+        }
+    </div></div>
+</div>

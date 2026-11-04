@@ -1,0 +1,40 @@
+@page "/profile"
+@model RouteGo.App.Features.Profile.Profile.ProfileModel
+@*
+    The address is fixed by the product (the "My profile" menu link points at /profile), so the
+    page declares it instead of /profile/profile.
+*@
+@{ ViewData["Title"] = "My profile"; }
+
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-7 col-xl-6"><div class="form-card">
+        <h1 class="mb-4">My profile</h1>
+
+        <partial name="_PageAlert" model="Model.Alert" />
+
+        @if (Model.Account != null)
+        {
+            <dl class="row mb-1" data-profile-account>
+                <dt class="col-sm-4">Email</dt>
+                <dd class="col-sm-8" data-profile-email>@Model.Account.Email</dd>
+                <dt class="col-sm-4">Role</dt>
+                <dd class="col-sm-8" data-profile-role>@Model.Account.RoleLabel</dd>
+            </dl>
+            <p class="form-text mb-4" data-profile-hint>Email and role cannot be changed.</p>
+
+            <form method="post" novalidate data-profile-form>
+                <div class="mb-3">
+                    <label asp-for="Input.FullName" class="form-label">Full name</label>
+                    <input asp-for="Input.FullName" class="form-control" autocomplete="name" aria-describedby="full-name-error" />
+                    <span asp-validation-for="Input.FullName" id="full-name-error" class="invalid-feedback d-block"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Input.Phone" class="form-label">Mobile number <span class="text-muted">(optional)</span></label>
+                    <input asp-for="Input.Phone" type="tel" class="form-control" autocomplete="tel" aria-describedby="phone-error" />
+                    <span asp-validation-for="Input.Phone" id="phone-error" class="invalid-feedback d-block"></span>
+                </div>
+                <button type="submit" class="btn btn-primary">Save changes</button>
+            </form>
+        }
+    </div></div>
+</div>

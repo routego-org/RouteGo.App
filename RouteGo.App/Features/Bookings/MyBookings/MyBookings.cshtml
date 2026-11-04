@@ -1,0 +1,64 @@
+@page "/my-bookings"
+@model RouteGo.App.Features.Bookings.MyBookings.MyBookingsModel
+@using RouteGo.App.Features.Bookings.MyBookings
+@*
+    The address is fixed by the product (/my-bookings, linked from the customer's menu and from every
+    booking page). Booking does not list a booking still waiting for payment; its own page shows it.
+    Paging is by page numbers only; the page number is the address's "page".
+*@
+@{
+    ViewData["Title"] = "My bookings";
+}
+
+<h1 class="page-title">My bookings</h1>
+
+<partial name="_PageAlert" model="Model.Alert" />
+
+@if (Model.List != null)
+{
+    if (Model.List.TotalItems == 0)
+    {
+        <p data-bookings-empty>@Messages.EmptyCollection("bookings")</p>
+        <a href="/" data-search-buses>@BookingDisplay.LinkSearchBuses</a>
+    }
+    else
+    {
+        <p class="small text-muted" data-bookings-showing>@Model.TotalText()</p>
+        <div class="d-grid gap-3 mb-4" data-bookings>
+            @foreach (BookingListItem item in Model.List.Items)
+            {
+                <article class="card" data-booking="@item.BookingId">
+                    <div class="card-body">
+                        <div class="d-flex flex-wrap justify-content-between gap-2">
+                            <h2 class="h5 mb-1" data-route>@BookingDisplay.RouteName(item.Trip)</h2>
+                            <span class="badge text-bg-secondary align-self-start" data-status>@BookingDisplay.StatusLabel(item.Status)</span>
+                        </div>
+                        <dl class="row mb-2">
+                            <dt class="col-sm-3">Departs</dt><dd class="col-sm-9 mb-1" data-departs>@IndiaTime.Format(item.Trip.DepartureAt)</dd>
+                            <dt class="col-sm-3">Seats</dt><dd class="col-sm-9 mb-1" data-seats>@SeatDisplay.SeatList(item.SeatNos)</dd>
+                            <dt class="col-sm-3">Total</dt><dd class="col-sm-9 mb-1" data-total>@TripDisplay.Rupees(item.TotalAmount)</dd>
+                        </dl>
+                        @if (item.Refund != null)
+                        {
+                            <p class="mb-2" data-refund>@BookingDisplay.RefundLine(item.Refund)</p>
+                        }
+                        <a href="@BookingDisplay.BookingAddress(item.BookingId)" data-view-booking>@BookingDisplay.LinkViewBooking</a>
+                    </div>
+                </article>
+            }
+        </div>
+        @if (Model.PageCount() > 1)
+        {
+            <nav data-bookings-pages aria-label="Pages">
+                <ul class="pagination">
+                    @for (int pageNumber = 1; pageNumber <= Model.PageCount(); pageNumber++)
+                    {
+                        <li class="page-item @(pageNumber == Model.List.Page ? "active" : "")">
+                            <a class="page-link" href="@Model.ListAddress(pageNumber)">@pageNumber</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    }
+}

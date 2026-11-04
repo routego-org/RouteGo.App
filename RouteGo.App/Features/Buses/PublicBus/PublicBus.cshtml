@@ -1,0 +1,64 @@
+@page "/buses/{busId:guid}"
+@model RouteGo.App.Features.Buses.PublicBus.PublicBusModel
+@using RouteGo.App.Features.Buses.PublicBus
+@*
+    The address is fixed by the product (/buses/{busId}, linked from the operator's bus page and trip
+    list and the admin trip search), so the page declares it instead of /buses/public-bus.
+*@
+@{
+    PublicBusDetails? bus = Model.Bus;
+    ViewData["Title"] = bus is null ? "Bus" : bus.Name;
+}
+
+@if (bus != null)
+{
+    <h1 class="page-title" data-bus-name>@bus.Name</h1>
+}
+
+<partial name="_PageAlert" model="Model.Alert" />
+
+@if (bus != null)
+{
+    List<string> photos = Model.PhotoAddresses();
+    @if (photos.Count == 0)
+    {
+        <p class="text-muted" data-no-photos>No photos of this bus yet.</p>
+    }
+    else
+    {
+        <div class="d-flex flex-wrap gap-2 mb-4" data-photos>
+            @foreach (string photo in photos)
+            {
+                <img class="bus-photo" src="@photo" alt="@bus.Name" data-photo />
+            }
+        </div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <dl class="row mb-0" data-bus-fields>
+                <dt class="col-sm-3">Bus type</dt>
+                <dd class="col-sm-9" data-field="bus-type">@Messages.BusTypeLabel(bus.BusType)</dd>
+                <dt class="col-sm-3">AC</dt>
+                <dd class="col-sm-9" data-field="ac">@Messages.YesNo(bus.IsAc)</dd>
+                <dt class="col-sm-3">Amenities</dt>
+                <dd class="col-sm-9" data-field="amenities">
+                    @if (bus.Amenities.Count == 0)
+                    {
+                        @:None
+                    }
+                    else
+                    {
+                        @string.Join(", ", bus.Amenities.Select(Messages.AmenityLabel))
+                    }
+                </dd>
+                <dt class="col-sm-3">Seat classes</dt>
+                <dd class="col-sm-9" data-field="seat-classes">@string.Join(", ", bus.SeatClasses)</dd>
+            </dl>
+        </div>
+    </div>
+
+    <p class="mb-1" data-seats>@bus.TotalSeats seats</p>
+    <p class="mb-1" data-company>Bus company: @bus.OperatorName</p>
+    <p data-rating>@Model.RatingText()</p>
+}

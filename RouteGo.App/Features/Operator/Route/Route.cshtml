@@ -1,0 +1,75 @@
+@page "/operator/routes/{routeId:guid}"
+@model RouteGo.App.Features.Operator.Route.RouteModel
+@using RouteGo.App.Features.Operator.Route
+@*
+    The route's address is fixed by the product (/operator/routes/{routeId}, linked from the route
+    list and the schedule pages), so the page declares it instead of /operator/route.
+*@
+@{
+    RouteDetails? route = Model.Route;
+    ViewData["Title"] = route is null ? "Route" : route.Name();
+}
+
+@if (route != null)
+{
+    <h1 class="page-title" data-route-name>@route.Name()</h1>
+}
+
+<partial name="_PageAlert" model="Model.Alert" />
+
+@if (route != null)
+{
+    @if (Model.IsConfirming)
+    {
+        <div class="card border-danger mb-4" data-confirm>
+            <div class="card-body">
+                <p data-confirm-question>Deactivate the route @route.Name()? You will not be able to add new schedules on it. Schedules and trips already on it keep running. You cannot turn a route back on.</p>
+                <form method="post" action="@Model.DeactivateAddress()" asp-antiforgery="true" novalidate data-confirm-form>
+                    <button type="submit" class="btn btn-danger">Deactivate route</button>
+                    <a class="btn btn-link" href="@Model.RouteAddress()" data-cancel>Cancel</a>
+                </form>
+            </div>
+        </div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <ol class="list-unstyled mb-0" data-stops>
+                @foreach (RouteStop stop in route.Stops)
+                {
+                    <li class="py-1" data-stop>@stop.Sequence. @stop.City.Name, @stop.City.State — @FleetDisplay.Duration(stop.OffsetMinutes)</li>
+                }
+            </ol>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <dl class="row mb-0" data-route-fields>
+                <dt class="col-sm-3">Distance (km)</dt>
+                <dd class="col-sm-9" data-distance>@route.DistanceKm</dd>
+                <dt class="col-sm-3">Journey time</dt>
+                <dd class="col-sm-9" data-journey-time>@FleetDisplay.Duration(route.JourneyMinutes)</dd>
+                <dt class="col-sm-3">Status</dt>
+                <dd class="col-sm-9" data-status>@FleetDisplay.StatusLabel(route.Status)</dd>
+                <dt class="col-sm-3">Created at</dt>
+                <dd class="col-sm-9" data-created-at>@IndiaTime.Format(route.CreatedAt)</dd>
+                @if (route.DeactivatedAt != null)
+                {
+                    <dt class="col-sm-3">Deactivated at</dt>
+                    <dd class="col-sm-9" data-deactivated-at>@IndiaTime.Format(route.DeactivatedAt.Value)</dd>
+                }
+            </dl>
+        </div>
+    </div>
+
+    @if (route.IsActive && !Model.IsConfirming)
+    {
+        <div class="d-flex flex-wrap gap-2 mb-4" data-route-actions>
+            <a class="btn btn-primary" href="@Model.NewScheduleAddress()">Add a schedule on this route</a>
+            <a class="btn btn-outline-danger" href="@Model.ConfirmAddress()">Deactivate route</a>
+        </div>
+    }
+
+    <a href="@RouteModel.RouteListAddress" data-back>@RouteModel.BackToListText</a>
+}

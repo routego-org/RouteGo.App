@@ -1,0 +1,15 @@
+@page "/operator/buses/new"
+@model RouteGo.App.Features.Operator.NewBus.NewBusModel
+@*
+    The address is fixed by the product (/operator/buses/new, linked from the bus list), so the page
+    declares it instead of /operator/new-bus.
+*@
+@{ ViewData["Title"] = "Add a bus"; }
+
+<div class="form-card">
+    <h1 class="mb-3">Add a bus</h1>
+
+    <partial name="_PageAlert" model="Model.Alert" />
+
+    <partial name="_BusForm" model="Model.View()" />
+</div>

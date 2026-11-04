@@ -1,0 +1,52 @@
+@page
+@model RouteGo.App.Features.Auth.Register.RegisterModel
+@{ ViewData["Title"] = "Create your account"; }
+
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-7 col-xl-6"><div class="form-card">
+        <h1 class="mb-4">Create your account</h1>
+
+        @if (Model.RegisteredEmail != null)
+        {
+            string resendHref = "/auth/resend-verification?email=" + Uri.EscapeDataString(Model.RegisteredEmail);
+            <div class="alert alert-success" role="status" data-registered>
+                <p class="mb-2">Your account is created. We sent a verification link to @Model.RegisteredEmail. Open the email and click the link to activate your account. The link works for 24 hours.</p>
+                <p class="mb-0">Didn't get the email? <a class="alert-link" href="@resendHref">Send the email again</a></p>
+            </div>
+        }
+        else
+        {
+            <partial name="_PageAlert" model="Model.Alert" />
+
+            <form method="post" novalidate data-register-form>
+                <div class="mb-3">
+                    <label asp-for="Input.Email" class="form-label"></label>
+                    <input asp-for="Input.Email" type="email" class="form-control" autocomplete="email" aria-describedby="email-error" />
+                    <span asp-validation-for="Input.Email" id="email-error" class="invalid-feedback d-block"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Input.Password" class="form-label"></label>
+                    <input asp-for="Input.Password" type="password" class="form-control" autocomplete="new-password" aria-describedby="password-hint password-error" />
+                    <div id="password-hint" class="form-text" data-password-hint>At least 10 characters, with at least one letter and one number.</div>
+                    <span asp-validation-for="Input.Password" id="password-error" class="invalid-feedback d-block"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Input.FullName" class="form-label">Full name</label>
+                    <input asp-for="Input.FullName" class="form-control" autocomplete="name" aria-describedby="full-name-error" />
+                    <span asp-validation-for="Input.FullName" id="full-name-error" class="invalid-feedback d-block"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Input.Phone" class="form-label">Mobile number <span class="text-muted">(optional)</span></label>
+                    <input asp-for="Input.Phone" type="tel" class="form-control" autocomplete="tel-national" aria-describedby="phone-error" />
+                    <span asp-validation-for="Input.Phone" id="phone-error" class="invalid-feedback d-block"></span>
+                </div>
+                <button type="submit" class="btn btn-primary">Create account</button>
+            </form>
+
+            <ul class="list-unstyled mt-4" data-register-links>
+                <li class="mb-2">Already have an account? <a href="/auth/login">Sign in</a></li>
+                <li>Are you a bus company? <a href="/operator/apply">Apply as a bus operator</a></li>
+            </ul>
+        }
+    </div></div>
+</div>

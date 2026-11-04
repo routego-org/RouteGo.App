@@ -1,0 +1,70 @@
+@page
+@model RouteGo.App.Features.Operator.Reapply.ReapplyModel
+@using RouteGo.App.Features.Operator.Reapply
+@{ ViewData["Title"] = "Re-apply as a bus operator"; }
+
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-7 col-xl-6"><div class="form-card">
+        <h1 class="mb-4">Re-apply as a bus operator</h1>
+
+        @if (Model.EarlierRejections != null)
+        {
+            <div class="alert alert-success" role="status" data-reapplied>
+                <p class="mb-0">Your new application is sent. Our team will review it and email you the result.</p>
+            </div>
+            @if (Model.EarlierRejections.Count > 0)
+            {
+                <ul class="list-unstyled" data-earlier-rejections>
+                    @foreach (EarlierRejection rejection in Model.EarlierRejections)
+                    {
+                        <li class="mb-3">
+                            <div data-rejection-reason>Earlier rejection: @rejection.Reason</div>
+                            <div class="small text-muted" data-rejection-date>Rejected on @IndiaTime.FormatDate(rejection.RejectedAt)</div>
+                        </li>
+                    }
+                </ul>
+            }
+            <a href="/" data-go-home>Go to Home</a>
+        }
+        else
+        {
+            <p class="mb-4" data-reapply-intro>Was your application not approved? Enter your sign-in email and password, and your corrected company details. You can re-apply 7 days after the rejection.</p>
+
+            <partial name="_PageAlert" model="Model.Alert" />
+
+            <form method="post" novalidate data-reapply-form>
+                <div class="mb-3">
+                    <label asp-for="Input.Email" class="form-label">Email</label>
+                    <input asp-for="Input.Email" type="email" class="form-control" autocomplete="email" aria-describedby="email-error" />
+                    <span asp-validation-for="Input.Email" id="email-error" class="invalid-feedback d-block"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Input.Password" class="form-label">Password</label>
+                    <input asp-for="Input.Password" type="password" class="form-control" autocomplete="current-password" aria-describedby="password-error" />
+                    <span asp-validation-for="Input.Password" id="password-error" class="invalid-feedback d-block"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Input.CompanyName" class="form-label">Company name</label>
+                    <input asp-for="Input.CompanyName" class="form-control" autocomplete="organization" aria-describedby="company-name-error" />
+                    <span asp-validation-for="Input.CompanyName" id="company-name-error" class="invalid-feedback d-block"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Input.ContactEmail" class="form-label">Contact email</label>
+                    <input asp-for="Input.ContactEmail" type="email" class="form-control" autocomplete="email" aria-describedby="contact-email-error" />
+                    <span asp-validation-for="Input.ContactEmail" id="contact-email-error" class="invalid-feedback d-block"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Input.Gstin" class="form-label">GSTIN</label>
+                    <input asp-for="Input.Gstin" class="form-control" autocomplete="off" aria-describedby="gstin-hint gstin-error" />
+                    <div id="gstin-hint" class="form-text">15 characters, for example 27AAPFU0939F1ZV.</div>
+                    <span asp-validation-for="Input.Gstin" id="gstin-error" class="invalid-feedback d-block"></span>
+                </div>
+                <button type="submit" class="btn btn-primary">Send new application</button>
+            </form>
+
+            <ul class="list-unstyled mt-4" data-reapply-links>
+                <li>First time? <a href="/operator/apply">Apply as a bus operator</a></li>
+            </ul>
+        }
+    </div></div>
+</div>

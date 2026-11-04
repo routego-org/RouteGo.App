@@ -1,0 +1,37 @@
+@page "/admin/users/new"
+@model RouteGo.App.Features.Admin.NewAdmin.NewAdminModel
+@{ ViewData["Title"] = "Create admin"; }
+
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-7 col-xl-6"><div class="form-card">
+        <h1 class="mb-4">Create admin</h1>
+
+        <partial name="_PageAlert" model="Model.Alert" />
+
+        <form method="post" novalidate data-new-admin-form>
+            <div class="mb-3">
+                <label asp-for="Input.Email" class="form-label">Email</label>
+                <input asp-for="Input.Email" type="email" class="form-control" autocomplete="off" aria-describedby="email-error" />
+                <span asp-validation-for="Input.Email" id="email-error" class="invalid-feedback d-block"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Input.Password" class="form-label">Password</label>
+                <input asp-for="Input.Password" type="password" class="form-control" autocomplete="new-password" aria-describedby="password-hint password-error" />
+                <div id="password-hint" class="form-text" data-password-hint>RouteGo does not email this password. Give it to the new admin yourself. They cannot change it later.</div>
+                <span asp-validation-for="Input.Password" id="password-error" class="invalid-feedback d-block"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Input.FullName" class="form-label">Full name</label>
+                <input asp-for="Input.FullName" class="form-control" autocomplete="off" aria-describedby="full-name-error" />
+                <span asp-validation-for="Input.FullName" id="full-name-error" class="invalid-feedback d-block"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Input.Phone" class="form-label">Mobile number <span class="text-muted">(optional)</span></label>
+                <input asp-for="Input.Phone" type="tel" class="form-control" autocomplete="off" aria-describedby="phone-error" />
+                <span asp-validation-for="Input.Phone" id="phone-error" class="invalid-feedback d-block"></span>
+            </div>
+            <button type="submit" class="btn btn-primary">Create admin</button>
+            <a class="btn btn-link" href="/admin/users" data-back-to-users>Back to users</a>
+        </form>
+    </div></div>
+</div>

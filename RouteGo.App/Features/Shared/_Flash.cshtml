@@ -1,0 +1,10 @@
+@*
+    One-shot PRG message set by a PageModel (TempData[Flash.Key] = "…" before RedirectToPage),
+    rendered once by _Layout. TempData[Flash.KindKey] picks the variant (Flash.KindSuccess |
+    KindWarning | KindInfo | KindDanger); success is the default. Markup is a Bootstrap alert.
+*@
+@if (TempData[Flash.Key] is string message && !string.IsNullOrWhiteSpace(message))
+{
+    string kind = TempData[Flash.KindKey] as string ?? Flash.KindSuccess;
+    <div class="alert alert-@kind" role="status" data-flash>@message</div>
+}

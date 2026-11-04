@@ -1,0 +1,100 @@
+@page "/trips/{tripId}/book"
+@model RouteGo.App.Features.Bookings.BookSeats.BookSeatsModel
+@using RouteGo.App.Features.Bookings.BookSeats
+@*
+    The address is fixed by the product (/trips/{tripId}/book, linked from "Book these seats" on the
+    public seat map). The trip is not constrained to an identifier: an address that names no trip still
+    shows the "not available" message. Choosing a seat holds nothing; seats are held when Pay is chosen.
+    Every Available seat has a passenger box that stays closed until the seat is chosen: the page script
+    opens it and keeps the total; without the script "Update seats" does the same with a round trip.
+*@
+@{
+    ViewData["Title"] = Model.Map is null ? "Book seats" : Model.Heading();
+}
+
+@if (Model.Map != null)
+{
+    <h1 class="page-title" data-heading>@Model.Heading()</h1>
+}
+
+<partial name="_PageAlert" model="Model.Alert" />
+
+@if (Model.Map != null)
+{
+    string? notice = SeatDisplay.Notice(Model.Map.IsCancelled, Model.Map.IsDeparted);
+    @if (notice != null)
+    {
+        <div class="alert alert-warning" role="status" data-notice>@notice</div>
+    }
+
+    @if (Model.CanBook())
+    {
+        <p class="lead" data-available>@Model.AvailableText()</p>
+
+        <form method="post" action="@Model.PostAddress(null)" asp-antiforgery="true" novalidate data-book-form>
+            <partial name="_SeatGrid" model="Model.Grid()" />
+
+            <p class="text-muted" data-held-note>Your seats are held for you when you choose Pay.</p>
+
+            <section class="card mb-4">
+                <div class="card-body">
+                    <label class="form-label" for="contact-name">@BookSeatsChecks.ContactLabel</label>
+                    <input class="form-control" id="contact-name" name="ContactName" value="@Model.ContactName" autocomplete="name" data-contact-name />
+                    <span class="invalid-feedback d-block" data-error="@BookSeatsChecks.ContactKey">@Model.FieldError(BookSeatsChecks.ContactKey)</span>
+                </div>
+            </section>
+
+            <div data-passengers>
+                @foreach (PassengerRow row in Model.PassengerRows())
+                {
+                    string seatNo = row.Seat.SeatNo;
+                    string prefix = "Passengers[" + seatNo + "]";
+                    <fieldset class="card mb-3" data-passenger="@seatNo" hidden="@(!row.IsChosen)" disabled="@(!row.IsChosen)">
+                        <div class="card-body">
+                            <legend class="h6">Seat @seatNo · @row.Seat.SeatClass · @TripDisplay.Rupees(row.Fare)</legend>
+                            <input type="hidden" name="@(prefix + ".Fare")" value="@row.Fare" />
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="name-@seatNo">@BookSeatsChecks.NameLabel</label>
+                                    <input class="form-control" id="name-@seatNo" name="@(prefix + ".Name")" value="@row.Input.Name" data-name />
+                                    <span class="invalid-feedback d-block" data-error="@BookSeatsChecks.Key(seatNo, "name")">@Model.FieldError(BookSeatsChecks.Key(seatNo, "name"))</span>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label" for="age-@seatNo">@BookSeatsChecks.AgeLabel</label>
+                                    <input class="form-control" id="age-@seatNo" name="@(prefix + ".Age")" value="@row.Input.Age" inputmode="numeric" data-age />
+                                    <span class="invalid-feedback d-block" data-error="@BookSeatsChecks.Key(seatNo, "age")">@Model.FieldError(BookSeatsChecks.Key(seatNo, "age"))</span>
+                                </div>
+                                <div class="col-md-3">
+                                    <span class="form-label d-block">@BookSeatsChecks.GenderLabel</span>
+                                    @foreach (string gender in new[] { "male", "female", "other" })
+                                    {
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" id="gender-@seatNo-@gender" name="@(prefix + ".Gender")" value="@gender" checked="@(row.Input.Gender == gender)" data-gender />
+                                            <label class="form-check-label" for="gender-@seatNo-@gender">@BookingDisplay.GenderLabel(gender)</label>
+                                        </div>
+                                    }
+                                    <span class="invalid-feedback d-block" data-error="@BookSeatsChecks.Key(seatNo, "gender")">@Model.FieldError(BookSeatsChecks.Key(seatNo, "gender"))</span>
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+                }
+            </div>
+
+            <p class="fs-5 fw-semibold" data-total>@Model.TotalText()</p>
+            @if (Model.Picks.Count == 0)
+            {
+                <p class="text-muted" data-choose-hint>Choose at least one seat.</p>
+            }
+
+            <div class="d-flex flex-wrap gap-2 mb-4">
+                <button type="submit" class="btn btn-primary" data-pay>@Model.PayText()</button>
+                <button type="submit" class="btn btn-outline-secondary" formaction="@Model.PostAddress("Choose")" data-update-seats>Update seats</button>
+            </div>
+        </form>
+    }
+}
+
+@section Scripts {
+    <script cdn-src="~/js/book-seats.js"></script>
+}

@@ -1,0 +1,116 @@
+@page
+@model RouteGo.App.Features.Admin.EmailLog.EmailLogModel
+@using RouteGo.App.Features.Admin.EmailLog
+@{ ViewData["Title"] = "Email log"; }
+
+<h1 class="page-title">Email log</h1>
+
+@if (Model.Query.Email is null)
+{
+    <p data-email-log-intro>Enter an email address to see every email RouteGo tried to send to it.</p>
+}
+
+<form method="get" action="/admin/email-log" class="row g-2 align-items-end mb-4 filter-bar" novalidate data-email-log-search>
+    <div class="col-sm-8">
+        <label for="search-email" class="form-label">Email address</label>
+        <input id="search-email" name="email" type="email" class="form-control" value="@Model.Query.Email" aria-describedby="search-email-error" />
+        <span asp-validation-for="Query.Email" id="search-email-error" class="invalid-feedback d-block"></span>
+    </div>
+    <div class="col-sm-2">
+        <button type="submit" class="btn btn-primary w-100">Search</button>
+    </div>
+</form>
+
+<partial name="_PageAlert" model="Model.Alert" />
+
+@if (Model.Confirmation != null)
+{
+    SendLogEntry confirmation = Model.Confirmation;
+    <div class="card border-secondary mb-4" data-confirm>
+        <div class="card-body">
+            <p data-confirm-question>Send this email again to @confirmation.ToAddress? Subject: @confirmation.Subject</p>
+            <form method="post" action="@Model.ResendAddress()" asp-antiforgery="true" novalidate data-confirm-form>
+                <input type="hidden" name="Input.SendLogEntryId" value="@confirmation.SendLogEntryId" />
+                <button type="submit" class="btn btn-primary">Resend email</button>
+                <a class="btn btn-link" href="@Model.ListAddress(Model.Query.PageNumber)" data-cancel>Cancel</a>
+            </form>
+        </div>
+    </div>
+}
+
+@if (Model.Emails != null)
+{
+    if (Model.Emails.Items.Count == 0)
+    {
+        <p data-email-log-empty>No emails were sent to @Model.Query.Email.</p>
+    }
+    else
+    {
+        <h2 class="h5" data-email-log-heading>Emails sent to @Model.Query.Email</h2>
+        <p class="small text-muted" data-email-log-showing>@Model.ShowingText()</p>
+        <div class="table-responsive">
+            <table class="table align-middle" data-email-log-table>
+                <thead>
+                    <tr>
+                        <th scope="col">Tried at</th>
+                        <th scope="col">Email type</th>
+                        <th scope="col">Subject</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Failure reason</th>
+                        <th scope="col">Failure detail</th>
+                        <th scope="col">Receipt number</th>
+                        <th scope="col">Sent at</th>
+                        <th scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (SendLogEntry entry in Model.Emails.Items)
+                    {
+                        <tr data-entry-row="@entry.SendLogEntryId">
+                            <td class="small">@IndiaTime.Format(entry.AttemptedAt)</td>
+                            <td>@EmailLogModel.EmailTypeLabel(entry.EmailType)</td>
+                            <td>
+                                @entry.Subject
+                                @if (entry.ResendOf != null)
+                                {
+                                    <div class="small" data-entry-resend-of>Resend of an earlier email</div>
+                                }
+                                <div class="small text-muted" data-entry-event-id>Event ID: @entry.EventId</div>
+                                <div class="small text-muted" data-entry-correlation-id>Correlation ID: @entry.CorrelationId</div>
+                            </td>
+                            <td data-entry-status>@EmailLogModel.StateLabel(entry.Status)</td>
+                            <td data-entry-failure-reason>@EmailLogModel.FailureReasonLabel(entry.FailureReason)</td>
+                            <td class="small">@entry.FailureDetail</td>
+                            <td class="small">@entry.ProviderMessageId</td>
+                            <td class="small">
+                                @if (entry.SentAt != null)
+                                {
+                                    @IndiaTime.Format(entry.SentAt.Value)
+                                }
+                            </td>
+                            <td class="text-end">
+                                @if (EmailLogModel.CanResend(entry))
+                                {
+                                    <a class="btn btn-sm btn-outline-primary" href="@Model.ConfirmAddress(entry.SendLogEntryId)" data-resend>Resend</a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (Model.PageCount() > 1)
+        {
+            <nav data-email-log-pages>
+                <ul class="pagination">
+                    @for (int pageNumber = 1; pageNumber <= Model.PageCount(); pageNumber++)
+                    {
+                        <li class="page-item @(pageNumber == Model.Emails.Page ? "active" : "")">
+                            <a class="page-link" href="@Model.ListAddress(pageNumber)">@pageNumber</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    }
+}

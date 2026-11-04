@@ -1,0 +1,14 @@
+@page
+@model RouteGo.App.Features.Auth.Logout.LogoutModel
+@{ ViewData["Title"] = "Sign out"; }
+
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-7 col-xl-6"><div class="form-card">
+        <h1 class="mb-4">Sign out</h1>
+        <p data-logout-question>Do you want to sign out?</p>
+        <form method="post" data-logout-form class="d-flex gap-3 align-items-center">
+            <button type="submit" class="btn btn-primary">Sign out</button>
+            <a href="/">Cancel</a>
+        </form>
+    </div></div>
+</div>

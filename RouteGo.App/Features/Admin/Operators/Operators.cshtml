@@ -1,0 +1,138 @@
+@page
+@model RouteGo.App.Features.Admin.Operators.OperatorsModel
+@using RouteGo.App.Features.Admin.Operators
+@{ ViewData["Title"] = "Operator applications"; }
+
+<h1 class="page-title">Operator applications</h1>
+
+<form method="get" action="/admin/operators" class="row g-2 align-items-end mb-4 filter-bar" novalidate data-operators-filters>
+    <div class="col-sm-5">
+        <label for="filter-status" class="form-label">Status</label>
+        <select id="filter-status" name="status" class="form-select" aria-describedby="filter-status-error">
+            @foreach (string status in OperatorsQueryValidator.Statuses)
+            {
+                <option value="@status" selected="@(Model.ChosenStatus() == status)">@OperatorsModel.StateLabel(status)</option>
+            }
+        </select>
+        <span asp-validation-for="Query.Status" id="filter-status-error" class="invalid-feedback d-block"></span>
+    </div>
+    <div class="col-sm-2">
+        <button type="submit" class="btn btn-primary w-100">Search</button>
+    </div>
+</form>
+
+<partial name="_PageAlert" model="Model.Alert" />
+
+@if (Model.Confirmation != null)
+{
+    DecisionConfirmation confirmation = Model.Confirmation;
+    bool isApprove = confirmation.Decision == Decision.Approve;
+    <div class="card border-secondary mb-4" data-confirm>
+        <div class="card-body">
+            @if (isApprove)
+            {
+                <p data-confirm-question>Approve @confirmation.CompanyName? They will be able to sign in and sell bus tickets. We will email them.</p>
+            }
+            else
+            {
+                <p data-confirm-question>Reject @confirmation.CompanyName? We will email them the reason you write here. They can re-apply after 7 days.</p>
+            }
+            <form method="post" action="@Model.DecideAddress(confirmation.Decision)" asp-antiforgery="true" novalidate data-confirm-form>
+                <input type="hidden" name="Input.OperatorId" value="@confirmation.OperatorId" />
+                <input type="hidden" name="Input.CompanyName" value="@confirmation.CompanyName" />
+                @if (isApprove)
+                {
+                    <button type="submit" class="btn btn-success">Approve</button>
+                }
+                else
+                {
+                    <div class="mb-3">
+                        <label asp-for="Input.Reason" class="form-label">Reason</label>
+                        <textarea asp-for="Input.Reason" class="form-control" rows="3" aria-describedby="reason-error"></textarea>
+                        <span asp-validation-for="Input.Reason" id="reason-error" class="invalid-feedback d-block"></span>
+                    </div>
+                    <button type="submit" class="btn btn-danger">Reject application</button>
+                }
+                <a class="btn btn-link" href="@Model.ListAddress(Model.Query.PageNumber)" data-cancel>Cancel</a>
+            </form>
+        </div>
+    </div>
+}
+
+@if (Model.Applications != null)
+{
+    if (Model.Applications.Items.Count == 0)
+    {
+        <p data-operators-empty>@(Model.Query.IsWaitingView() ? "No applications are waiting for review." : "No applications match the current filters.")</p>
+    }
+    else
+    {
+        <p class="small text-muted" data-operators-showing>@Model.ShowingText()</p>
+        @foreach (ApplicationSummary application in Model.Applications.Items)
+        {
+            <div class="card mb-3" data-application="@application.CompanyName">
+                <div class="card-body">
+                    <dl class="row mb-0" data-application-fields>
+                        <dt class="col-sm-3">Company name</dt>
+                        <dd class="col-sm-9">@application.CompanyName</dd>
+                        <dt class="col-sm-3">GSTIN</dt>
+                        <dd class="col-sm-9">@application.Gstin</dd>
+                        <dt class="col-sm-3">Contact email</dt>
+                        <dd class="col-sm-9">@application.ContactEmail</dd>
+                        <dt class="col-sm-3">Email</dt>
+                        <dd class="col-sm-9">@application.Email</dd>
+                        <dt class="col-sm-3">Full name</dt>
+                        <dd class="col-sm-9">@application.FullName</dd>
+                        <dt class="col-sm-3">Submitted at</dt>
+                        <dd class="col-sm-9">@IndiaTime.Format(application.SubmittedAt)</dd>
+                        <dt class="col-sm-3">Status</dt>
+                        <dd class="col-sm-9" data-application-status>@OperatorsModel.StateLabel(application.Status)</dd>
+                        @if (application.ReviewedAt != null)
+                        {
+                            <dt class="col-sm-3">Reviewed at</dt>
+                            <dd class="col-sm-9">@IndiaTime.Format(application.ReviewedAt.Value)</dd>
+                        }
+                        @if (application.RejectReason != null)
+                        {
+                            <dt class="col-sm-3">Rejection reason</dt>
+                            <dd class="col-sm-9">@application.RejectReason</dd>
+                        }
+                    </dl>
+                    @if (application.PreviousRejections.Count > 0)
+                    {
+                        <ul class="list-unstyled border-top pt-2 mt-2 mb-0" data-earlier-rejections>
+                            @foreach (EarlierRejection rejection in application.PreviousRejections)
+                            {
+                                <li class="mb-2" data-earlier-rejection>
+                                    <div data-earlier-reason>Earlier rejection: @rejection.Reason</div>
+                                    <div class="small text-muted" data-earlier-submitted>Submitted on @IndiaTime.Format(rejection.SubmittedAt)</div>
+                                    <div class="small text-muted" data-earlier-rejected>Rejected on @IndiaTime.Format(rejection.RejectedAt)</div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    @if (OperatorsModel.IsDecidable(application))
+                    {
+                        <div class="mt-3">
+                            <a class="btn btn-sm btn-outline-success" href="@Model.ConfirmAddress(Decision.Approve, application.OperatorId)" data-approve>Approve</a>
+                            <a class="btn btn-sm btn-outline-danger" href="@Model.ConfirmAddress(Decision.Reject, application.OperatorId)" data-reject>Reject</a>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+        @if (Model.PageCount() > 1)
+        {
+            <nav data-operators-pages>
+                <ul class="pagination">
+                    @for (int pageNumber = 1; pageNumber <= Model.PageCount(); pageNumber++)
+                    {
+                        <li class="page-item @(pageNumber == Model.Applications.Page ? "active" : "")">
+                            <a class="page-link" href="@Model.ListAddress(pageNumber)">@pageNumber</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    }
+}

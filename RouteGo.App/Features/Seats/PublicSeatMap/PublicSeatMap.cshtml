@@ -1,0 +1,40 @@
+@page "/trips/{tripId}/seats"
+@model RouteGo.App.Features.Seats.PublicSeatMap.PublicSeatMapModel
+@*
+    The address is fixed by the product (/trips/{tripId}/seats, linked from search results, the
+    operator's and the admin's seat pages, and shared links), so the page declares it instead of
+    /seats/public-seat-map. The trip is not constrained to an identifier here: an address that names
+    no trip must still show the "not available" message, not a bare not-found page.
+*@
+@{
+    ViewData["Title"] = Model.Map is null ? "Seats" : Model.Heading();
+}
+
+@if (Model.Map != null)
+{
+    <h1 class="page-title" data-heading>@Model.Heading()</h1>
+}
+
+<partial name="_PageAlert" model="Model.Alert" />
+
+@if (Model.Map != null)
+{
+    string? notice = SeatDisplay.Notice(Model.Map.IsCancelled, Model.Map.IsDeparted);
+    @if (notice != null)
+    {
+        <div class="alert alert-warning" role="status" data-notice>@notice</div>
+    }
+
+    string? available = Model.AvailableText();
+    @if (available != null)
+    {
+        <p class="lead" data-available>@available</p>
+    }
+
+    <partial name="_SeatGrid" model="Model.Grid()" />
+
+    @if (Model.OffersBooking())
+    {
+        <a class="btn btn-primary" href="@Model.BookAddress()" data-book-seats>Book these seats</a>
+    }
+}

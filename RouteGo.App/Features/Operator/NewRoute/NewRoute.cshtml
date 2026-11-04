@@ -1,0 +1,107 @@
+@page "/operator/routes/new"
+@model RouteGo.App.Features.Operator.NewRoute.NewRouteModel
+@using RouteGo.App.Features.Operator.NewRoute
+@*
+    The address is fixed by the product (/operator/routes/new, linked from the route list), so the
+    page declares it instead of /operator/new-route.
+*@
+@{
+    ViewData["Title"] = "Add a route";
+    int lastIndex = Model.Input.Stops.Count - 1;
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-10 col-xl-8"><div class="form-card">
+        <h1 class="mb-3">Add a route</h1>
+
+        <partial name="_PageAlert" model="Model.Alert" />
+
+        @if (Model.Cities != null)
+        {
+            List<SelectListItem> cityChoices = Model.CityChoices();
+            <p class="mb-4" data-route-warning>You cannot change a route after you create it. Check the stops and times before you save.</p>
+
+            <form method="post" action="@Model.CreateAddress()" asp-antiforgery="true" novalidate data-new-route-form>
+                @* Pressing Enter in a box submits the form's first button; this keeps that "Create route", not "Remove". *@
+                <button type="submit" class="visually-hidden" tabindex="-1" aria-hidden="true">Create route</button>
+
+                @for (int index = 0; index <= lastIndex; index++)
+                {
+                    bool isFirst = index == 0;
+                    bool isLast = index == lastIndex;
+                    string hoursId = $"stop-{index}-hours";
+                    string minutesId = $"stop-{index}-minutes";
+
+                    @if (isLast)
+                    {
+                        @if (Model.Input.CanAddStop())
+                        {
+                            <button type="submit" class="btn btn-outline-primary mb-3" formaction="@Model.AddStopAddress()" data-add-stop>Add a stop</button>
+                        }
+                        else
+                        {
+                            <p class="text-muted mb-3" data-most-stops>A route can have at most 12 stops.</p>
+                        }
+                    }
+
+                    <fieldset class="border rounded p-3 mb-3" data-stop>
+                        @if (isFirst)
+                        {
+                            <legend class="h6 float-none w-auto mb-2">First stop</legend>
+                        }
+                        else if (isLast)
+                        {
+                            <legend class="h6 float-none w-auto mb-2">Last stop</legend>
+                        }
+                        <div class="row g-3 align-items-start">
+                            <div class="col-md-6">
+                                <label asp-for="Input.Stops[index].CityId" class="form-label">City</label>
+                                <select asp-for="Input.Stops[index].CityId" asp-items="cityChoices" class="form-select" data-city>
+                                    <option value=""></option>
+                                </select>
+                                <span asp-validation-for="Input.Stops[index].CityId" class="invalid-feedback d-block" data-city-error></span>
+                            </div>
+                            @if (isFirst)
+                            {
+                                <div class="col-md-6">
+                                    <span class="form-label d-block">Time from start</span>
+                                    <p class="form-control-plaintext mb-0" data-first-time>@FleetDisplay.Duration(0)</p>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="col-md-6" role="group" aria-label="Time from start">
+                                    <span class="form-label d-block">Time from start</span>
+                                    <div class="row g-2">
+                                        <div class="col">
+                                            <label for="@hoursId" class="form-label small">Hours</label>
+                                            <input asp-for="Input.Stops[index].Hours" id="@hoursId" class="form-control" inputmode="numeric" autocomplete="off" data-hours />
+                                        </div>
+                                        <div class="col">
+                                            <label for="@minutesId" class="form-label small">Minutes</label>
+                                            <input asp-for="Input.Stops[index].Minutes" id="@minutesId" class="form-control" inputmode="numeric" autocomplete="off" data-minutes />
+                                        </div>
+                                    </div>
+                                    <span asp-validation-for="Input.Stops[index].Hours" class="invalid-feedback d-block" data-time-error></span>
+                                </div>
+                            }
+                        </div>
+                        @if (Model.Input.CanRemoveStop(index))
+                        {
+                            <button type="submit" class="btn btn-sm btn-outline-danger mt-3" formaction="@Model.RemoveStopAddress(index)" data-remove-stop>Remove</button>
+                        }
+                    </fieldset>
+                }
+
+                <div class="mb-4">
+                    <label asp-for="Input.DistanceKm" class="form-label">Distance (km)</label>
+                    <input asp-for="Input.DistanceKm" class="form-control" inputmode="numeric" autocomplete="off" data-distance />
+                    <span asp-validation-for="Input.DistanceKm" class="invalid-feedback d-block" data-distance-error></span>
+                </div>
+
+                <button type="submit" class="btn btn-primary" data-create>Create route</button>
+                <a class="btn btn-link" href="@NewRouteModel.CancelAddress" data-cancel>Cancel</a>
+            </form>
+        }
+    </div></div>
+</div>

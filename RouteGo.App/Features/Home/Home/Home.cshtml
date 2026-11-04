@@ -1,0 +1,136 @@
+@page "/"
+@model RouteGo.App.Features.Home.Home.HomeModel
+@*
+    The portal's root address: fixed by the product (the brand link, every "Go to Home" link and
+    the sign-in default all point at "/"), so the page declares it instead of /home/home.
+*@
+@if (!Model.IsSignedIn)
+{
+    ViewData["Title"] = "Welcome to RouteGo";
+    ViewData["FullWidth"] = true;
+    <div data-visitor-home>
+        <section class="hero">
+            <div class="container">
+                <div class="row align-items-center g-5">
+                    <div class="col-lg-7">
+                        <span class="hero-eyebrow"><partial name="_Icon" model="@("map-pin")" /> Intercity bus tickets</span>
+                        <h1 class="hero-title">Welcome to RouteGo</h1>
+                        <p class="hero-lead">Book intercity bus tickets in minutes.</p>
+                        <div class="hero-actions" data-home-actions>
+                            <a class="btn btn-accent btn-lg rounded-pill px-4" href="/auth/login">Sign in</a>
+                            <a class="btn btn-light btn-lg rounded-pill px-4" href="/auth/register">Create an account</a>
+                            <a class="hero-link" href="/operator/apply">Apply as a bus operator <partial name="_Icon" model="@("arrow-right")" /></a>
+                        </div>
+                    </div>
+                    <div class="col-lg-5 d-none d-lg-block" aria-hidden="true">
+                        <div class="hero-art">
+                            <div class="hero-art-ring"></div>
+                            <div class="hero-art-bus"><partial name="_Icon" model="@("bus")" /></div>
+                            <div class="hero-art-route">
+                                <span class="hero-art-stop"></span>
+                                <span class="hero-art-line"></span>
+                                <span class="hero-art-stop hero-art-stop-end"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <svg class="hero-wave" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+                <path d="M0 40 C 240 80 480 0 720 30 C 960 60 1200 10 1440 40 L1440 80 L0 80 Z" fill="currentColor" />
+            </svg>
+        </section>
+
+        <section class="container search-overlap">
+            <partial name="_SearchForm" model="Model.SearchView()" />
+        </section>
+
+        <section class="container py-5">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <span class="feature-icon"><partial name="_Icon" model="@("zap")" /></span>
+                        <h2 class="h5">Quick booking</h2>
+                        <p class="text-muted mb-0">Find your bus and book your seat in a few simple steps.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <span class="feature-icon feature-icon-green"><partial name="_Icon" model="@("shield")" /></span>
+                        <h2 class="h5">Trusted bus companies</h2>
+                        <p class="text-muted mb-0">Our team checks every bus company before it can sell tickets.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <span class="feature-icon feature-icon-amber"><partial name="_Icon" model="@("mail")" /></span>
+                        <h2 class="h5">Updates by email</h2>
+                        <p class="text-muted mb-0">We email you when your account is ready, so you always know where you stand.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="container pb-5">
+            <div class="operator-band">
+                <div>
+                    <h2 class="h4 mb-1">Run a bus company?</h2>
+                    <p class="mb-0">Sell your tickets on RouteGo. Apply in a few minutes and our team will review it.</p>
+                </div>
+                <a class="btn btn-light rounded-pill px-4" href="/operator/apply">Apply now</a>
+            </div>
+        </section>
+    </div>
+}
+else
+{
+    ViewData["Title"] = "Home";
+    <div data-signed-in-home>
+        <h1 class="page-title">Home</h1>
+        <section class="welcome-banner">
+            <div>
+                <p class="welcome-name" data-welcome>Welcome, @Model.WelcomeName.</p>
+                <p class="welcome-role" data-signed-in-role>You are signed in as @Model.RoleLabel.</p>
+            </div>
+            <span class="welcome-art" aria-hidden="true"><partial name="_Icon" model="@("bus")" /></span>
+        </section>
+
+        <section class="mb-4">
+            <partial name="_SearchForm" model="Model.SearchView()" />
+        </section>
+
+        <h2 class="section-title">Quick links</h2>
+        <div class="row g-3">
+            @if (Model.IsAdmin)
+            {
+                <div class="col-sm-6 col-xl-4">
+                    <a class="tile" href="/admin/operators">
+                        <span class="tile-icon"><partial name="_Icon" model="@("clipboard")" /></span>
+                        <span><span class="tile-title">Operator applications</span><span class="tile-text">Review bus companies waiting for approval.</span></span>
+                    </a>
+                </div>
+                <div class="col-sm-6 col-xl-4">
+                    <a class="tile" href="/admin/users">
+                        <span class="tile-icon"><partial name="_Icon" model="@("users")" /></span>
+                        <span><span class="tile-title">Users</span><span class="tile-text">Find accounts, suspend or reactivate them.</span></span>
+                    </a>
+                </div>
+                <div class="col-sm-6 col-xl-4">
+                    <a class="tile" href="/admin/email-log">
+                        <span class="tile-icon"><partial name="_Icon" model="@("mail")" /></span>
+                        <span><span class="tile-title">Email log</span><span class="tile-text">Check if an email went out and send it again.</span></span>
+                    </a>
+                </div>
+            }
+            <div class="col-sm-6 col-xl-4">
+                <a class="tile" href="/profile">
+                    <span class="tile-icon"><partial name="_Icon" model="@("user")" /></span>
+                    <span><span class="tile-title">My profile</span><span class="tile-text">Update your name and mobile number.</span></span>
+                </a>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script cdn-src="~/js/bus-search.js"></script>
+}

@@ -1,0 +1,14 @@
+@*
+    A page-level message at the top of the content (PageAlert), with its optional next-step links.
+*@
+@model PageAlert?
+@if (Model != null)
+{
+    <div class="alert alert-@Model.Kind" role="alert" data-page-alert>
+        @Model.Text
+        @foreach (PageAlert.Link link in Model.Links)
+        {
+            <a class="alert-link ms-1" href="@link.Href">@link.Text</a>
+        }
+    </div>
+}

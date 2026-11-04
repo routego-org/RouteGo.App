@@ -1,0 +1,86 @@
+@model RouteGo.App.Features.Operator.Dashboard.DashboardModel
+@using RouteGo.App.Features.Operator.Dashboard
+@*
+    The sales section: drawn with the page, and drawn again alone (?handler=Sales) by the page script.
+*@
+@{
+    SalesSection sales = Model.Sales;
+    ReportRangeCheck check = sales.Check;
+}
+
+<section class="card mb-4" data-sales>
+    <div class="card-body">
+        <h2 class="h5">Sales</h2>
+        <form method="get" action="/operator/dashboard" class="row g-2 align-items-end mb-3" novalidate data-section-form="sales">
+            <input type="hidden" name="day" value="@Model.DayText" />
+            <div class="col-sm-3">
+                <label for="sales-from" class="form-label">From</label>
+                <input id="sales-from" name="from" type="date" class="form-control" value="@Model.FromText" />
+                @if (check.FromError != null)
+                {
+                    <span class="invalid-feedback d-block" data-from-error>@check.FromError</span>
+                }
+            </div>
+            <div class="col-sm-3">
+                <label for="sales-to" class="form-label">To</label>
+                <input id="sales-to" name="to" type="date" class="form-control" value="@Model.ToText" />
+                @if (check.ToError != null)
+                {
+                    <span class="invalid-feedback d-block" data-to-error>@check.ToError</span>
+                }
+            </div>
+            <div class="col-sm-3">
+                <button type="submit" class="btn btn-primary w-100" data-show-figures>Show figures</button>
+            </div>
+            @if (check.RangeError != null)
+            {
+                <div class="col-12">
+                    <span class="invalid-feedback d-block" data-date-range-error>@check.RangeError</span>
+                </div>
+            }
+        </form>
+
+        <partial name="_PageAlert" model="sales.Alert" />
+
+        @if (sales.Summary != null)
+        {
+            SalesTotals totals = sales.Summary.Totals;
+            <dl class="row mb-3" data-totals>
+                <dt class="col-sm-3">Confirmed bookings</dt><dd class="col-sm-9" data-total="confirmed-bookings">@totals.ConfirmedBookings</dd>
+                <dt class="col-sm-3">Confirmed seats</dt><dd class="col-sm-9" data-total="confirmed-seats">@totals.ConfirmedSeats</dd>
+                <dt class="col-sm-3">Revenue</dt><dd class="col-sm-9" data-total="revenue">@ReportDisplay.Rupees(totals.Revenue)</dd>
+                <dt class="col-sm-3">Refunds</dt><dd class="col-sm-9" data-total="refunds">@ReportDisplay.Rupees(totals.Refunds)</dd>
+                <dt class="col-sm-3">Net</dt><dd class="col-sm-9 fw-semibold" data-total="net">@ReportDisplay.Rupees(totals.Net)</dd>
+            </dl>
+
+            <div class="table-responsive">
+                <table class="table align-middle" data-daily>
+                    <thead>
+                        <tr>
+                            <th scope="col">Date</th>
+                            <th scope="col">Confirmed bookings</th>
+                            <th scope="col">Confirmed seats</th>
+                            <th scope="col">Revenue</th>
+                            <th scope="col">Refunds</th>
+                            <th scope="col">Net</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (SalesDay day in sales.Summary.DailySeries)
+                        {
+                            <tr data-day="@ReportDisplay.WireDate(day.Date)">
+                                <td>@IndiaTime.FormatDay(day.Date)</td>
+                                <td>@day.ConfirmedBookings</td>
+                                <td>@day.ConfirmedSeats</td>
+                                <td>@ReportDisplay.Rupees(day.Revenue)</td>
+                                <td>@ReportDisplay.Rupees(day.Refunds)</td>
+                                <td>@ReportDisplay.Rupees(day.Net)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <p class="small text-muted mb-0" data-revenue-note>@ReportDisplay.RevenueNote</p>
+        }
+    </div>
+</section>

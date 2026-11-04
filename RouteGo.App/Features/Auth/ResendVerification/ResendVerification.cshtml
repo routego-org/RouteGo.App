@@ -1,0 +1,38 @@
+@page
+@model RouteGo.App.Features.Auth.ResendVerification.ResendVerificationModel
+@{ ViewData["Title"] = "Send the verification email again"; }
+
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-7 col-xl-6"><div class="form-card">
+        <h1 class="mb-4">Send the verification email again</h1>
+
+        @if (Model.SentMessage != null)
+        {
+            <div class="alert alert-success" role="status" data-sent>@Model.SentMessage</div>
+            <a href="/auth/login" data-back-to-sign-in>Back to sign in</a>
+        }
+        else
+        {
+            <partial name="_PageAlert" model="Model.Alert" />
+            <p data-resend-text>Enter the email you registered with. We will send you a new verification link.</p>
+
+            <form method="post" novalidate data-resend-form>
+                <div class="mb-3">
+                    <label asp-for="Input.Email" class="form-label"></label>
+                    <input asp-for="Input.Email" type="email" class="form-control" autocomplete="email" aria-describedby="email-error" />
+                    <span asp-validation-for="Input.Email" id="email-error" class="invalid-feedback d-block"></span>
+                </div>
+                @if (Model.WaitSeconds > 0)
+                {
+                    <button type="submit" class="btn btn-primary" data-wait-seconds="@Model.WaitSeconds">Send verification email</button>
+                }
+                else
+                {
+                    <button type="submit" class="btn btn-primary">Send verification email</button>
+                }
+            </form>
+
+            <p class="mt-4"><a href="/auth/login" data-back-to-sign-in>Back to sign in</a></p>
+        }
+    </div></div>
+</div>

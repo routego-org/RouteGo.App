@@ -1,0 +1,75 @@
+@page "/admin/trips/{tripId}/seats"
+@model RouteGo.App.Features.Admin.SeatAllocations.SeatAllocationsModel
+@using RouteGo.App.Features.Admin.SeatAllocations
+@*
+    The address is fixed by the product (/admin/trips/{tripId}/seats, linked from "Seats" in trip
+    search). The trip is not constrained to an identifier: an address that names no trip still shows
+    the "not available" message. A stuck hold's "Cancel hold" opens its question through the address
+    (?cancel={bookingId}), above the seats, so it works without a page script.
+*@
+@{
+    ViewData["Title"] = Model.Seats is null ? "Seats" : Model.Heading();
+}
+
+@if (Model.Seats != null)
+{
+    <h1 class="page-title" data-heading>@Model.Heading()</h1>
+}
+
+<partial name="_PageAlert" model="Model.Alert" />
+
+@if (Model.Seats != null)
+{
+    string? notice = SeatDisplay.Notice(Model.Seats.IsCancelled, Model.Seats.IsDeparted);
+    @if (notice != null)
+    {
+        <div class="alert alert-warning" role="status" data-notice>@notice</div>
+    }
+
+    <p class="lead" data-counts>@Model.CountsText()</p>
+
+    @if (Model.Stuck.Count > 0)
+    {
+        <div class="card border-danger mb-4" data-stuck-holds>
+            <div class="card-body">
+                <p class="fw-semibold" data-stuck-count>@StuckHolds.CountText(Model.Stuck.Count)</p>
+                <ul class="list-unstyled mb-0">
+                    @foreach (StuckHold hold in Model.Stuck)
+                    {
+                        <li class="d-flex flex-wrap gap-2 align-items-center mb-1" data-stuck-hold="@hold.BookingId">
+                            <span>Booking ID: @hold.BookingId</span>
+                            <span class="text-muted">@SeatDisplay.SeatList(hold.SeatNos)</span>
+                            <a class="btn btn-sm btn-outline-danger" href="@Model.CancelAddress(hold.BookingId)" data-cancel-hold>Cancel hold</a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    }
+
+    @if (Model.CancelHold != null)
+    {
+        <div class="card border-danger mb-4" data-confirm>
+            <div class="card-body">
+                <p data-confirm-question>@StuckHolds.Question(Model.CancelHold, Model.Seats)</p>
+                <form method="post" action="@Model.PostAddress()" asp-antiforgery="true" novalidate data-cancel-form>
+                    <input type="hidden" asp-for="CancelInput.BookingId" />
+                    <div class="mb-3">
+                        <label asp-for="CancelInput.Reason" class="form-label">Reason</label>
+                        <textarea asp-for="CancelInput.Reason" class="form-control" rows="2" data-reason></textarea>
+                        <span asp-validation-for="CancelInput.Reason" class="invalid-feedback d-block" data-reason-error></span>
+                    </div>
+                    <button type="submit" class="btn btn-danger" data-confirm-cancel>Cancel hold</button>
+                    <a class="btn btn-link" href="@Model.SeatsAddress()" data-go-back>Go back</a>
+                </form>
+            </div>
+        </div>
+    }
+
+    <partial name="_SeatGrid" model="Model.Grid()" />
+
+    <div class="d-flex flex-wrap gap-3" data-seat-links>
+        <a href="@Model.PublicSeatMapAddress()" data-public-seat-map>@Messages.LinkPublicSeatMap</a>
+        <a href="@SeatAllocationsModel.TripsAddress" data-back-to-trips>@SeatAllocationsModel.BackToTrips</a>
+    </div>
+}

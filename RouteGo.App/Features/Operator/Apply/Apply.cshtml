@@ -1,0 +1,72 @@
+@page
+@model RouteGo.App.Features.Operator.Apply.ApplyModel
+@{ ViewData["Title"] = "Apply to sell bus tickets on RouteGo"; }
+
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-7 col-xl-6"><div class="form-card">
+        <h1 class="mb-4">Apply to sell bus tickets on RouteGo</h1>
+
+        @if (Model.AppliedEmail != null)
+        {
+            string resendHref = "/auth/resend-verification?email=" + Uri.EscapeDataString(Model.AppliedEmail);
+            <div class="alert alert-success" role="status" data-applied>
+                <p class="mb-2">Thank you for applying. We sent a verification link to @Model.AppliedEmail. Open the email and click the link. After you verify your email, our team will review your application and email you the result.</p>
+                <p class="mb-0">Didn't get the email? <a class="alert-link" href="@resendHref">Send the email again</a></p>
+            </div>
+        }
+        else
+        {
+            <p class="mb-4" data-apply-intro>Tell us about your bus company. After you verify your email, our team reviews your application.</p>
+
+            <partial name="_PageAlert" model="Model.Alert" />
+
+            <form method="post" novalidate data-apply-form>
+                <div class="mb-3">
+                    <label asp-for="Input.Email" class="form-label">Email</label>
+                    <input asp-for="Input.Email" type="email" class="form-control" autocomplete="email" aria-describedby="email-hint email-error" />
+                    <div id="email-hint" class="form-text">You will use this email to sign in.</div>
+                    <span asp-validation-for="Input.Email" id="email-error" class="invalid-feedback d-block"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Input.Password" class="form-label">Password</label>
+                    <input asp-for="Input.Password" type="password" class="form-control" autocomplete="new-password" aria-describedby="password-hint password-error" />
+                    <div id="password-hint" class="form-text">At least 10 characters, with at least one letter and one number.</div>
+                    <span asp-validation-for="Input.Password" id="password-error" class="invalid-feedback d-block"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Input.FullName" class="form-label">Full name</label>
+                    <input asp-for="Input.FullName" class="form-control" autocomplete="name" aria-describedby="full-name-hint full-name-error" />
+                    <div id="full-name-hint" class="form-text">Your own name.</div>
+                    <span asp-validation-for="Input.FullName" id="full-name-error" class="invalid-feedback d-block"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Input.Phone" class="form-label">Mobile number <span class="text-muted">(optional)</span></label>
+                    <input asp-for="Input.Phone" type="tel" class="form-control" autocomplete="tel" aria-describedby="phone-error" />
+                    <span asp-validation-for="Input.Phone" id="phone-error" class="invalid-feedback d-block"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Input.CompanyName" class="form-label">Company name</label>
+                    <input asp-for="Input.CompanyName" class="form-control" autocomplete="organization" aria-describedby="company-name-error" />
+                    <span asp-validation-for="Input.CompanyName" id="company-name-error" class="invalid-feedback d-block"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Input.ContactEmail" class="form-label">Contact email</label>
+                    <input asp-for="Input.ContactEmail" type="email" class="form-control" autocomplete="email" aria-describedby="contact-email-hint contact-email-error" />
+                    <div id="contact-email-hint" class="form-text">Where RouteGo can reach your company. It can be the same as your sign-in email.</div>
+                    <span asp-validation-for="Input.ContactEmail" id="contact-email-error" class="invalid-feedback d-block"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Input.Gstin" class="form-label">GSTIN</label>
+                    <input asp-for="Input.Gstin" class="form-control" autocomplete="off" aria-describedby="gstin-hint gstin-error" />
+                    <div id="gstin-hint" class="form-text">15 characters, for example 27AAPFU0939F1ZV.</div>
+                    <span asp-validation-for="Input.Gstin" id="gstin-error" class="invalid-feedback d-block"></span>
+                </div>
+                <button type="submit" class="btn btn-primary">Send application</button>
+            </form>
+
+            <ul class="list-unstyled mt-4" data-apply-links>
+                <li>Your application was rejected before? <a href="/operator/reapply">Re-apply</a></li>
+            </ul>
+        }
+    </div></div>
+</div>

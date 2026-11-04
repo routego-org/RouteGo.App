@@ -1,0 +1,169 @@
+@page "/my-bookings/{bookingId}"
+@model RouteGo.App.Features.Bookings.Booking.BookingModel
+@using RouteGo.App.Features.Bookings.Booking
+@*
+    The address is fixed by the product (/my-bookings/{bookingId}, linked from every booking page, the
+    payment return page and the confirmation emails). The booking is not constrained to an identifier in
+    the route, so an address that is no booking still shows the "couldn't find that booking" message.
+    "Pay now" posts to this page, which loads the booking again and redirects: the payment page address
+    is never written to the page. "Give up this booking" asks first, above the booking, so it works
+    without a page script.
+*@
+@{
+    ViewData["Title"] = Model.View is null ? "Booking" : Model.Heading();
+}
+
+@if (Model.View != null)
+{
+    <h1 class="page-title" data-heading>@Model.Heading()</h1>
+}
+
+<partial name="_PageAlert" model="Model.Alert" />
+
+@if (Model.View != null)
+{
+    BookingPageView view = Model.View;
+    BookingDetail booking = view.Booking;
+
+    <p class="mb-3"><span class="badge text-bg-secondary fs-6" data-status>@BookingDisplay.StatusLabel(booking.Status)</span></p>
+
+    @if (view.IsWaiting)
+    {
+        @if (view.HoldSecondsLeft != null)
+        {
+            <partial name="_HoldCountdown" model="view.HoldSecondsLeft.Value" />
+        }
+        else
+        {
+            <div class="alert alert-warning" role="status" data-time-to-pay-ended>@BookingPageView.TimeToPayEnded</div>
+        }
+
+        @if (Model.IsAskingToGiveUp())
+        {
+            <div class="card border-warning mb-4" data-give-up-question>
+                <div class="card-body">
+                    <p data-question>Give up this booking? Your seats will be released and you can book again straight away. This cannot be undone.</p>
+                    <form method="post" action="@Model.ThisAddress()?handler=GiveUp" asp-antiforgery="true" novalidate>
+                        <button type="submit" class="btn btn-danger" data-confirm-give-up>Give up booking</button>
+                        <a class="btn btn-link" href="@Model.ThisAddress()" data-keep-booking>Keep booking</a>
+                    </form>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="d-flex flex-wrap gap-2 mb-4" data-waiting-actions>
+                @if (view.CanPayNow)
+                {
+                    <form method="post" action="@Model.ThisAddress()?handler=PayNow" asp-antiforgery="true" novalidate>
+                        <button type="submit" class="btn btn-primary" data-pay-now>Pay now</button>
+                    </form>
+                }
+                <a class="btn btn-outline-danger" href="@Model.ThisAddress()?giveUp=true" data-give-up>Give up this booking</a>
+            </div>
+        }
+    }
+
+    <partial name="_BookingOutcome" model="BookingDisplay.OutcomeLines(booking)" />
+
+    <section class="card mb-4">
+        <div class="card-body">
+            <h2 class="h5">Trip</h2>
+            <dl class="row mb-0">
+                <dt class="col-sm-4">Route</dt><dd class="col-sm-8" data-route>@BookingDisplay.RouteName(booking.Trip)</dd>
+                <dt class="col-sm-4">Travel date</dt><dd class="col-sm-8" data-travel-date>@IndiaTime.FormatDay(booking.Trip.ServiceDate)</dd>
+                <dt class="col-sm-4">Departs</dt><dd class="col-sm-8" data-departs>@IndiaTime.Format(booking.Trip.DepartureAt)</dd>
+                <dt class="col-sm-4">Arrives</dt><dd class="col-sm-8" data-arrives>@TripDisplay.Arrives(booking.Trip.ServiceDate, booking.Trip.ArrivalAt)</dd>
+                <dt class="col-sm-4">Bus</dt><dd class="col-sm-8" data-bus>@booking.Trip.BusName</dd>
+                <dt class="col-sm-4">Bus type</dt><dd class="col-sm-8" data-bus-type>@Messages.BusTypeLabel(booking.Trip.BusType)</dd>
+                <dt class="col-sm-4">Bus company</dt><dd class="col-sm-8" data-company>@booking.Trip.OperatorName</dd>
+            </dl>
+        </div>
+    </section>
+
+    <section class="card mb-4">
+        <div class="card-body">
+            <h2 class="h5">Seats</h2>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0" data-seats-table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Seat number</th>
+                            <th scope="col">Seat class</th>
+                            <th scope="col">Fare</th>
+                            <th scope="col">Passenger name</th>
+                            <th scope="col">Passenger age</th>
+                            <th scope="col">Passenger gender</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (BookingSeatDetail seat in booking.Seats)
+                        {
+                            <tr data-seat-row="@seat.SeatNo">
+                                <td>@seat.SeatNo</td>
+                                <td>@seat.SeatClass</td>
+                                <td>@TripDisplay.Rupees(seat.Fare)</td>
+                                <td>@seat.PassengerName</td>
+                                <td>@seat.PassengerAge</td>
+                                <td>@BookingDisplay.GenderLabel(seat.PassengerGender)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section class="card mb-4">
+        <div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-4">Total</dt><dd class="col-sm-8 fw-semibold" data-total>@TripDisplay.Rupees(booking.TotalAmount)</dd>
+                <dt class="col-sm-4">Contact name</dt><dd class="col-sm-8" data-contact-name>@booking.ContactName</dd>
+                <dt class="col-sm-4">Contact email</dt><dd class="col-sm-8" data-contact-email>@booking.ContactEmail</dd>
+                <dt class="col-sm-4">Booked at</dt><dd class="col-sm-8" data-booked-at>@IndiaTime.Format(booking.CreatedAt)</dd>
+                @if (booking.ConfirmedAt != null)
+                {
+                    <dt class="col-sm-4">Confirmed at</dt><dd class="col-sm-8" data-confirmed-at>@IndiaTime.Format(booking.ConfirmedAt.Value)</dd>
+                }
+                @if (view.IsConfirmed)
+                {
+                    <dt class="col-sm-4">Seat changes</dt><dd class="col-sm-8" data-seat-changes>@booking.SeatChangeCount of @BookingDisplay.MaxSeatChanges used</dd>
+                }
+            </dl>
+        </div>
+    </section>
+
+    @if (view.IsConfirmed)
+    {
+        @if (view.HasTripLeft)
+        {
+            <div class="alert alert-warning" role="status" data-notice>@Messages.NoticeTripDeparted</div>
+        }
+
+        @if (view.SeatChangesNote != null)
+        {
+            <p data-seat-changes-note>@view.SeatChangesNote</p>
+        }
+
+        <div class="d-flex flex-wrap gap-2 mb-4" data-confirmed-actions>
+            <a class="btn btn-primary" href="@BookingDisplay.TicketAddress(booking.BookingId)" data-view-ticket>@BookingDisplay.LinkViewTicket</a>
+            @if (view.CanChangeSeats)
+            {
+                <a class="btn btn-outline-primary" href="@Model.ThisAddress()/change-seats" data-change-seats>Change seats</a>
+            }
+            @if (view.CanCancel)
+            {
+                <a class="btn btn-outline-danger" href="@Model.ThisAddress()/cancel" data-cancel-booking>Cancel booking</a>
+            }
+        </div>
+    }
+
+    @if (view.OffersSearch)
+    {
+        <a href="/" data-search-buses>@BookingDisplay.LinkSearchBuses</a>
+    }
+}
+
+@section Scripts {
+    <script cdn-src="~/js/hold-countdown.js"></script>
+}

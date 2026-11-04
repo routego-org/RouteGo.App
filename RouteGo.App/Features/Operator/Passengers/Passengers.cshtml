@@ -1,0 +1,61 @@
+@page "/operator/trips/{tripId}/passengers"
+@model RouteGo.App.Features.Operator.Passengers.PassengersModel
+@using RouteGo.App.Features.Operator.Passengers
+@*
+    The address is fixed by the product (/operator/trips/{tripId}/passengers, linked from "Passengers"
+    on My trips and on the dashboard). The trip is not constrained to an identifier: an address that
+    names no trip still shows the "not available yet" message. The booking contact's name and email,
+    and the amounts paid, are never part of the list Booking gives, so there is nothing to hide here.
+*@
+@{
+    ViewData["Title"] = Model.Passengers is null ? "Passengers" : Model.Heading();
+}
+
+@if (Model.Passengers != null)
+{
+    <h1 class="page-title" data-heading>@Model.Heading()</h1>
+}
+
+<partial name="_PageAlert" model="Model.Alert" />
+
+@if (Model.Passengers != null)
+{
+    <p class="lead" data-seats-booked>@Model.SeatsBookedText()</p>
+
+    @if (Model.Passengers.Passengers.Count == 0)
+    {
+        <p data-no-passengers>@PassengersModel.NoPassengers</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle" data-passengers>
+                <thead>
+                    <tr>
+                        <th scope="col">Seat number</th>
+                        <th scope="col">Seat class</th>
+                        <th scope="col">Passenger name</th>
+                        <th scope="col">Passenger age</th>
+                        <th scope="col">Passenger gender</th>
+                        <th scope="col">Booking ID</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (TripPassenger passenger in Model.Passengers.Passengers)
+                    {
+                        <tr data-passenger-row="@passenger.SeatNo">
+                            <td>@passenger.SeatNo</td>
+                            <td>@passenger.SeatClass</td>
+                            <td>@passenger.PassengerName</td>
+                            <td>@passenger.PassengerAge</td>
+                            <td>@BookingDisplay.GenderLabel(passenger.PassengerGender)</td>
+                            <td>@passenger.BookingId</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <a href="@PassengersModel.MyTripsAddress" data-back-to-trips>@PassengersModel.BackToTrips</a>
+}

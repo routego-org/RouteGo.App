@@ -1,0 +1,28 @@
+@model RouteGo.App.Features.Operator.Trips.TripsModel
+@using RouteGo.App.Features.Operator.Trips
+@*
+    One trip's fare form, opened by its "Change fares" link above the list. It posts with the list's
+    filters, so the same list is shown afterwards.
+*@
+@{ TripDetails trip = Model.FareTrip!; }
+
+<div class="card mb-4" data-fare-form-card>
+    <div class="card-body">
+        <h2 class="h5 mb-3" data-fare-form-title>Change fares — @TripActions.When(trip)</h2>
+        <form method="post" action="@Model.PostAddress("Fares")" asp-antiforgery="true" novalidate data-fare-form>
+            <input type="hidden" asp-for="FaresInput.TripId" />
+            @for (int index = 0; index < Model.FaresInput.Fares.Count; index++)
+            {
+                string fareId = $"trip-fare-{index}";
+                <div class="mb-2">
+                    <input type="hidden" asp-for="FaresInput.Fares[index].SeatClass" />
+                    <label for="@fareId" class="form-label small" data-fare-label>@Model.FaresInput.Fares[index].SeatClass (₹)</label>
+                    <input asp-for="FaresInput.Fares[index].Fare" id="@fareId" class="form-control w-auto" inputmode="numeric" autocomplete="off" data-fare-box />
+                    <span asp-validation-for="FaresInput.Fares[index].Fare" class="invalid-feedback d-block" data-fare-error></span>
+                </div>
+            }
+            <button type="submit" class="btn btn-primary" data-save-fares>Save fares</button>
+            <a class="btn btn-link" href="@Model.ListAddress(Model.Query.PageNumber)" data-fare-cancel>Cancel</a>
+        </form>
+    </div>
+</div>
