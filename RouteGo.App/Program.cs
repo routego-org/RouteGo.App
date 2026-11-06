@@ -156,13 +156,13 @@ builder.Services.AddSingleton<SessionRenewal>();
 builder.Services.AddTransient<CorrelationIdHandler>();
 builder.Services.AddTransient<IdentityTokenHandler>();
 builder.Services.AddTransient<UpstreamFailureHandler>();
+// Primary handler below: no cookie jar, because the pooled handler is shared by every person, so a
+// cookie stored by one response would be sent on another person's call. Connections recycle every
+// 2 minutes so a moved private address is picked up; the handler itself then never needs replacing.
 builder.Services.AddApiClient(builder.Configuration, HttpClients.Identity, ConfigKeys.IdentityUrl)
     .AddHttpMessageHandler<CorrelationIdHandler>()
     .AddHttpMessageHandler<IdentityTokenHandler>()
     .AddHttpMessageHandler<UpstreamFailureHandler>()
-    // No cookie jar: the pooled handler is shared by every person, so a cookie stored by one
-    // response would be sent on another person's call. Connections recycle every 2 minutes so a
-    // moved private address is picked up; the handler itself then never needs replacing.
     .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
     {
         UseCookies = false,
