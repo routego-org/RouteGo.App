@@ -1,0 +1,87 @@
+# Web Portal (Razor Pages BFF) — the only service exposed to the internet
+# Source: RouteGo.App   Image: routego/web-portal   ServiceAccount -> IAM role routego-web-portal-pod-role (EKS Pod Identity)
+# Settings that differ per AWS account come from ConfigMap routego-environment (RouteGo.Infra/k8s/platform/environment.yaml);
+# $(VAR) expands an env var defined above it. Secrets are read by the app from Secrets Manager.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-portal
+  labels: { app.kubernetes.io/name: web-portal, app.kubernetes.io/part-of: routego }
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels: { app.kubernetes.io/name: web-portal }
+  strategy: { type: Recreate }   # one key-ring volume; never two portals at once
+  template:
+    metadata:
+      labels: { app.kubernetes.io/name: web-portal, app.kubernetes.io/part-of: routego }
+    spec:
+      serviceAccountName: web-portal
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1654              # the 'app' user of the mcr.microsoft.com/dotnet/aspnet image
+        runAsGroup: 1654
+        fsGroup: 1654
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: web-portal
+          image: routego/web-portal      # rewritten to the ECR URL + tag by k8s/kustomization.yaml
+          ports:
+            - { name: http, containerPort: 8080 }
+          env:
+            - name: AWS_REGION
+              valueFrom:
+                configMapKeyRef: { name: routego-environment, key: AWS_REGION }
+            - name: AWS_ACCOUNT_ID
+              valueFrom:
+                configMapKeyRef: { name: routego-environment, key: AWS_ACCOUNT_ID }
+            - name: PUBLIC_URL
+              valueFrom:
+                configMapKeyRef: { name: routego-environment, key: PUBLIC_URL }
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            - name: DOTNET_gcServer          # workstation GC: less memory per pod
+              value: "0"
+            - name: IdentityUrl
+              value: "http://identity/"
+            - name: NotificationUrl
+              value: "http://notification/"
+            - name: FleetUrl
+              value: "http://fleet/"
+            - name: SeatInventoryUrl
+              value: "http://seat-inventory/"
+            - name: SearchUrl
+              value: "http://search/"
+            - name: BookingUrl
+              value: "http://booking/"
+            - name: ReportingUrl
+              value: "http://reporting/"
+            - name: AuditUrl
+              value: "http://audit/"
+            - name: TicketBucket
+              value: "routego-tickets-$(AWS_ACCOUNT_ID)-$(AWS_REGION)"
+          resources:
+            requests: { cpu: 50m, memory: 192Mi }
+            limits: { memory: 384Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: { drop: [ALL] }
+          startupProbe:              # .NET cold start + first AWS calls; up to 2 minutes
+            httpGet: { path: /health, port: http }
+            periodSeconds: 5
+            failureThreshold: 24
+          livenessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 15
+            failureThreshold: 3
+          readinessProbe:            # process up
+            httpGet: { path: /health, port: http }
+            periodSeconds: 10
+            failureThreshold: 3
+          volumeMounts:
+            - name: keys               # ASP.NET Data Protection key ring (login cookies)
+              mountPath: /keys
+      volumes:
+        - name: keys
+          emptyDir: {}                 # lost on pod restart = users must log in again (see k8s/README.md)
