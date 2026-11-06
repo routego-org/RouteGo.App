@@ -9,4 +9,4 @@ spec:
   type: ClusterIP
   selector: { app.kubernetes.io/name: web-portal }
   ports:
-    - { name: http, port: 80, targetPort: http }   # other services call http://web-portal/
+    - { name: http, port: 80, targetPort: http }   # -> the https-proxy sidecar (8081), which forwards to the portal

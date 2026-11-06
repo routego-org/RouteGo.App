@@ -28,7 +28,7 @@ spec:
         - name: web-portal
           image: routego/web-portal      # rewritten to the ECR URL + tag by k8s/kustomization.yaml
           ports:
-            - { name: http, containerPort: 8080 }
+            - { name: app, containerPort: 8080 }   # only the sidecar below talks to this port
           env:
             - name: AWS_REGION
               valueFrom:
@@ -68,20 +68,42 @@ spec:
             allowPrivilegeEscalation: false
             capabilities: { drop: [ALL] }
           startupProbe:              # .NET cold start + first AWS calls; up to 2 minutes
-            httpGet: { path: /health, port: http }
+            httpGet: { path: /health, port: app }
             periodSeconds: 5
             failureThreshold: 24
           livenessProbe:
-            httpGet: { path: /health, port: http }
+            httpGet: { path: /health, port: app }
             periodSeconds: 15
             failureThreshold: 3
           readinessProbe:            # process up
-            httpGet: { path: /health, port: http }
+            httpGet: { path: /health, port: app }
             periodSeconds: 10
             failureThreshold: 3
           volumeMounts:
             - name: keys               # ASP.NET Data Protection key ring (login cookies)
               mountPath: /keys
+        # TLS-terminating proxy stand-in (the EC2 design's nginx, as a sidecar). HTTPS ends at CloudFront;
+        # the request then reaches this pod over HTTP. The portal makes every cookie Secure-only and trusts
+        # X-Forwarded-Proto only from localhost, so nginx forwards to 127.0.0.1:8080 saying "https".
+        - name: https-proxy
+          image: nginxinc/nginx-unprivileged:1.27-alpine
+          ports:
+            - { name: http, containerPort: 8081 }
+          resources:
+            requests: { cpu: 10m, memory: 16Mi }
+            limits: { memory: 64Mi }
+          securityContext:
+            runAsUser: 101           # the image's own 'nginx' user
+            runAsGroup: 101
+            allowPrivilegeEscalation: false
+            capabilities: { drop: [ALL] }
+          readinessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 10
+          volumeMounts:
+            - { name: proxy-config, mountPath: /etc/nginx/conf.d, readOnly: true }
       volumes:
+        - name: proxy-config
+          configMap: { name: web-portal-proxy }
         - name: keys
           emptyDir: {}                 # lost on pod restart = users must log in again (see k8s/README.md)
